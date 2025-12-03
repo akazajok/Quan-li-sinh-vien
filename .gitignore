@@ -1,0 +1,14 @@
+# File biên dịch của Python
+__pycache__/
+*.py[cod]
+
+# Môi trường ảo (Virtual Environment)
+venv/
+env/
+.venv/
+
+# Biến môi trường
+.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
