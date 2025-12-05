@@ -244,19 +244,6 @@
                    <widget class="QLineEdit" name="lineEdit_search_Input"/>
                   </item>
                   <item>
-                   <spacer name="horizontalSpacer">
-                    <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>117</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                  <item>
                    <widget class="QPushButton" name="btn_add_sinh_vien">
                     <property name="text">
                      <string>Thêm sinh viên</string>
@@ -264,18 +251,17 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="btn_delete_sinh_vien">
-                    <property name="text">
-                     <string>Xóa sinh viên</string>
+                   <spacer name="horizontalSpacer_2">
+                    <property name="orientation">
+                     <enum>Qt::Horizontal</enum>
                     </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="btn_updata_sinh_vien">
-                    <property name="text">
-                     <string>Sửa sinh viên</string>
+                    <property name="sizeHint" stdset="0">
+                     <size>
+                      <width>40</width>
+                      <height>20</height>
+                     </size>
                     </property>
-                   </widget>
+                   </spacer>
                   </item>
                  </layout>
                 </widget>
