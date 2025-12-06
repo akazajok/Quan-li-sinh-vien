@@ -98,3 +98,13 @@ class Ui_Dialog(object):
         self.comboBox_gender.setItemText(2, _translate("Dialog", "Khác"))
         self.btn_cancel.setText(_translate("Dialog", "Hủy"))
         self.btn_update_infor.setText(_translate("Dialog", "Cập Nhật"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Dialog = QtWidgets.QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(Dialog)
+    Dialog.show()
+    sys.exit(app.exec_())
