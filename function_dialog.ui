@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>290</width>
-    <height>308</height>
+    <width>295</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -83,9 +83,6 @@
      <item row="1" column="1">
       <widget class="QLineEdit" name="lineEdit_fullName"/>
      </item>
-     <item row="2" column="1">
-      <widget class="QLineEdit" name="lineEdit_DateBirth"/>
-     </item>
      <item row="4" column="0">
       <widget class="QLabel" name="Label_class">
        <property name="text">
@@ -100,11 +97,27 @@
        </property>
       </widget>
      </item>
+     <item row="5" column="1">
+      <widget class="QLineEdit" name="lineEdit_GPA"/>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="lineEdit_class"/>
+     </item>
+     <item row="2" column="1">
+      <widget class="QDateEdit" name="dateEdit_DateBirth">
+       <property name="displayFormat">
+        <string>dd/MM/yyyy</string>
+       </property>
+       <property name="calendarPopup">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
      <item row="3" column="1">
-      <widget class="QComboBox" name="comboBox_sex">
+      <widget class="QComboBox" name="comboBox_gender">
        <item>
         <property name="text">
-         <string>Nam </string>
+         <string>Nam</string>
         </property>
        </item>
        <item>
@@ -118,12 +131,6 @@
         </property>
        </item>
       </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QLineEdit" name="lineEdit_GPA"/>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLineEdit" name="lineEdit_class"/>
      </item>
     </layout>
    </item>
