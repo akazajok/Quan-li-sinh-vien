@@ -10,14 +10,22 @@ class Student:
         self.DateOfBirth = DateOfBirth
         self.Gender = Gender
         self.Class = Class
-        self.GPA = float(GPA)
+        try :
+            self.GPA = float(GPA)
+            if self.GPA < 0 or self.GPA > 4:
+                raise ValueError(f"Điểm GPA không hợp lệ! Phải từ 0.0 đến 4.0")
+        except ValueError:
+            raise ValueError("Điểm GPA phải là 1 con số")
+
 
 class CsvData:
     def __init__(self, filename = "database.csv"):
         self.csv_file = filename
+        self.list_data = []
+        self.get_data_Csv()
 
     def get_data_Csv(self):
-        list_student = []
+        self.list_students = []
         try :
             with open(self.csv_file, 'r', encoding="utf-8-sig", newline='') as csvfile:
                 reader = csv.reader(csvfile)
@@ -30,19 +38,17 @@ class CsvData:
                             Gender = line[3]
                             Class = line[4]
                             GPA = line[5]
-                            list_student.append(Student(ID, full_name, DateOfBirth, Gender, Class, GPA))
+                            self.list_students.append(Student(ID, full_name, DateOfBirth, Gender, Class, GPA))
                         except:
                             pass
         except Exception as e:
             print(f"Lỗi khi đọc file: {e}")
 
-        return list_student
-
-    def update_data_Csv(self, list_student):
+    def update_data_Csv(self):
         try:
             with open(self.csv_file, 'w', encoding="utf-8-sig", newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                for student in list_student:
+                for student in self.list_students:
                     writer.writerow([
                         student.ID,  student.full_name,  student.DateOfBirth,
                         student.Gender, student.Class, student.GPA
@@ -50,15 +56,22 @@ class CsvData:
         except Exception as e:
             print(f"Lỗi khi đọc file: {e}")
 
-    def add_student_to_csv(self, student):
+    def add_student(self, new_student):
+        if not new_student.ID or not new_student.full_name or not new_student.Class or not new_student.GPA:
+            return False, f"Bạn phải nhập ĐẦY ĐỦ thông tin sinh viên"
+        for student in self.list_students:
+            if new_student.ID == student.ID:
+                return False, f"Mã sinh viên {new_student.ID} đã tồn tại!"
+
+        self.list_students.append(new_student)
         try:
             with open(self.csv_file, 'a', encoding="utf-8-sig", newline='') as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow([
-                    student.ID, student.full_name, student.DateOfBirth,
-                    student.Gender, student.Class, student.GPA
+                    new_student.ID, new_student.full_name, new_student.DateOfBirth,
+                    new_student.Gender, new_student.Class, new_student.GPA
                 ])
+            return True, "Thêm sinh viên thành công"
         except Exception as e:
-            print(f"Lỗi khi đọc file: {e}")
-        return
+            return False, f"Lỗi đọc file {e}"
             

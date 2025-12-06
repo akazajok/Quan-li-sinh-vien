@@ -1,6 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QDialog
 from PyQt5.QtCore import QDate
+from pyexpat.errors import messages
 
 from Student_management import Ui_MainWindow  # File giao diện gốc (auto-generated)
 from function_dialog import Ui_Dialog # file # File giao diện cập nhật sinh viên
@@ -15,7 +16,6 @@ class MainWindow(QMainWindow):
         self.function_dialog = Ui_Dialog()
 
         self.database = CsvData()
-        self.list_student = self.database.get_data_Csv()
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
         # Thêm dữ liệu
@@ -27,7 +27,8 @@ class MainWindow(QMainWindow):
         table.setSortingEnabled(False)  # Tắt sắp xếp (quan trọng nhất)
         table.setRowCount(0)  # Xóa sạch bảng
         # -------------------------
-        for row_index, student in enumerate(self.list_student):
+        list_students = self.database.list_students
+        for row_index, student in enumerate(list_students):
             table.insertRow(row_index)
             #Thêm thông tin sinh viên
             table.setItem(row_index, 0, QTableWidgetItem(student.ID))
@@ -40,39 +41,35 @@ class MainWindow(QMainWindow):
             TableHelper.add_button_to_tableWidget(self, self.ui.studentsTableWidget, row_index, 6)
         table.setSortingEnabled(True) # Bật lại sắp xếp để user bấm vào tiêu đề cột
 
-    def get_raw_data(self):
+    def get_data_dialog(self):
         ID = self.function_dialog.lineEdit_ID.text().strip()
         full_name = self.function_dialog.lineEdit_fullName.text().strip()
         DateOfBirth = self.function_dialog.dateEdit_DateBirth.text().strip()
         Gender = self.function_dialog.comboBox_gender.currentText().strip()
         Class = self.function_dialog.lineEdit_class.text().strip()
         GPA = self.function_dialog.lineEdit_GPA.text().strip()
-        return ID, full_name, DateOfBirth, Gender, Class, GPA
+        return Student( ID, full_name, DateOfBirth, Gender, Class, GPA)
 
     def add_student_to_table(self):
         #load giao diện thêm, sửa sinh viên ( function_dialog )
         dialog_window = QDialog()
         self.function_dialog.setupUi(dialog_window)
         def check_data() :
-            id, full_name, dob, gender, Class, GPA = self.get_raw_data()
-            if not id or not full_name or not Class or not GPA :
-                QMessageBox.warning( dialog_window, "Cảnh báo" , "Vui lòng nhập ĐẦY ĐỦ thông tin sinh viên")
-                return
-
-            for inf in self.list_student:
-                if id == inf.ID :
-                    QMessageBox.critical( dialog_window, "Lỗi" , f"Mã sinh viên {inf.ID} đã tồn tại!")
-                    return
-            student = Student(id, full_name, dob, gender, Class, GPA)
-            self.list_student.append(student)
-            self.database.add_student_to_csv(student)
-            self.load_data_to_table()
-            QMessageBox.information(self, "Thông báo" , "Thêm sinh viên thành công")
-            dialog_window.accept() #Đóng dialog
+            try :
+                new_student = self.get_data_dialog()
+                succes , message = self.database.add_student(new_student)
+                if succes :
+                    QMessageBox.information(self, "Thông báo" , message)
+                    self.load_data_to_table()
+                    dialog_window.accept()
+                else :
+                    QMessageBox.critical(dialog_window, "Lỗi" , message)
+            except Exception as e :
+                QMessageBox.warning(dialog_window, "Dữ liệu không hợp lệ" , str(e))
 
         # Bấm nút hủy thoát khỏi giao diện
         self.function_dialog.btn_cancel.clicked.connect( dialog_window.reject)
-        # Cập nhật sinh viên
+        # Ngắt kết nối cũ tránh bấm 1 lần thành 2 lần
         try:
             self.function_dialog.btn_update_infor.clicked.disconnect()
         except:
