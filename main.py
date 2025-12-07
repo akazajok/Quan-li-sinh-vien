@@ -55,7 +55,7 @@ class MainWindow(QMainWindow):
         #load giao diện thêm, sửa sinh viên ( function_dialog )
         dialog_window = QDialog()
         self.function_dialog.setupUi(dialog_window)
-        def check_data() :
+        def save_student() :
             try :
                 new_student = self.get_data_dialog()
                 succes , message = self.database.check_data_dialog(new_student)
@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
             self.function_dialog.btn_update_infor.clicked.disconnect()
         except:
             pass
-        self.function_dialog.btn_update_infor.clicked.connect( check_data )
+        self.function_dialog.btn_update_infor.clicked.connect( save_student )
         #-----Hiên thị dialog_window---------
         dialog_window.exec_()
 
@@ -88,26 +88,33 @@ class MainWindow(QMainWindow):
         sender_button = self.sender() # để biết mình ấn vào nút edit nào
         old_student = sender_button.inf_student # lấy thông tin student cần sửa
         # điền thông tin student cần sửa lên dialog
-        dialog_window.lineEdit_ID.setText(old_student.ID)
-        dialog_window.lineEdit_fullName.setText(old_student.full_name)
-        dialog_window.lineEdit_GPA.setText(old_student.DateOfBirth)
-        dialog_window.lineEdit_gender.setText(old_student.gender)
-        dialog_window.lineEdit_class.setText(old_student.Class)
-        dialog_window.lineEdit_ID.setText(old_student.GPA)
-
+        self.function_dialog.lineEdit_ID.setText(old_student.ID)
+        self.function_dialog.lineEdit_fullName.setText(old_student.full_name)
+        self.function_dialog.dateEdit_DateBirth.setText(old_student.DateOfBirth)
+        self.function_dialog.comboBox_gender.setCurrentText(old_student.Gender)
+        self.function_dialog.lineEdit_class.setText(old_student.Class)
+        self.function_dialog.lineEdit_GPA.setText(f"{old_student.GPA:.2f}")
+        def save_student() :
+            try :
+                new_student = self.get_data_dialog()
+                succes , message = self.database.check_data_dialog(new_student)
+                if succes :
+                    message = self.database.edit_student(new_student, old_student)
+                    QMessageBox.information(self, "Thông báo" , message)
+                    dialog_window.accept()
+                    self.load_data_to_table()
+                else:
+                    QMessageBox.critical(self, "Lỗi" , message)
+            except Exception as e:
+                QMessageBox.warning(dialog_window, "Dữ liệu không hợp lệ", str(e))
+        # btn_cancel đóng bảng dialog
+        self.function_dialog.btn_cancel.clicked.connect( dialog_window.reject )
+        # Ngắt kết nối cũ tránh bấm 1 lần thành 2 lần
         try :
-            new_student = self.get_data_dialog()
-            succes , message = self.database.check_data_dialog(new_student)
-            if succes :
-                message = self.database.edit_student(new_student, old_student)
-                QMessageBox.information(self, "Thông báo" , message)
-                dialog_window.accept()
-                self.load_data_to_table()
-            else:
-                QMessageBox.critical(self, "Lỗi" , message)
-        except Exception as e:
-            QMessageBox.warning(dialog_window, "Dữ liệu không hợp lệ", str(e))
-
+            self.function_dialog.btn_update_infor.clicked.disconnect()
+        except:
+            pass
+        self.function_dialog.btn_update_infor.clicked.connect( save_student )
         dialog_window.exec_()
 
     def delete_student_from_table(self):

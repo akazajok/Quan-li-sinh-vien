@@ -79,9 +79,9 @@ class CsvData:
         except Exception as e:
             return f"Lỗi đọc file {e}"
     def edit_student(self, new_student, old_student):
-        for student in self.list_students:
+        for index, student in enumerate(self.list_students):
             if old_student == student:
-                student = new_student
+                self.list_students[index] = new_student
                 self.update_data_Csv()
                 return "Thay đổi thôn tin sinh viên thành công"
-                break
+        return "Không tìm thấy sinh viên"
