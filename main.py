@@ -4,9 +4,9 @@ from PyQt5.QtCore import QDate
 from pyexpat.errors import messages
 import resources_rc  # Import Icons
 from Student_management import Ui_MainWindow  # File giao diện gốc (auto-generated)
-from function_dialog import Ui_Dialog # file # File giao diện cập nhật sinh viên
-from config_ui import TableHelper  # File trợ lý bạn vừa tạo
-from database import CsvData, Student
+from function_dialog import Ui_Dialog  # File giao diện cập nhật sinh viên
+from config_ui import TableHelper  # File xử lí giao diện khó
+from database import CsvData, Student # file lưu trữ data sinh viên, load csv
 
 class MainWindow(QMainWindow):
     def __init__(self):
