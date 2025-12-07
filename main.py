@@ -1,5 +1,6 @@
 import sys
 import re
+import math
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QDialog
 from PyQt5.QtCore import QDate
@@ -45,8 +46,15 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.function_dialog = Ui_Dialog()
-
         self.database = CsvData()
+
+        self.list_search = [] # tạo danh sách cần tìm kiếm
+
+        self.current_page = 1  # Trang hiện tại
+        self.limit = 20  # Số dòng mỗi trang
+        self.total_pages = 1  # Tổng số trang
+        self.ui.btn_prev.clicked.connect(self.prev_page)
+        self.ui.btn_next.clicked.connect(self.next_page)
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
         # Thêm dữ liệu sinh viên
@@ -55,18 +63,35 @@ class MainWindow(QMainWindow):
         self.ui.lineEdit_search_student.textChanged.connect(self.search_student)
 
     def load_data_to_table(self, data_list=None):
-        table = self.ui.studentsTableWidget
-        # --- TỐI ƯU HÓA TỐC ĐỘ ---
-        table.setSortingEnabled(False)  # Tắt sắp xếp (quan trọng nhất)
-        table.setRowCount(0)  # Xóa sạch bảng
-        # -------------------------
         # Nếu không truyền dữ liệu vào (data_list là None) -> Lấy tất cả sinh viên
         if data_list is None:
             list_students = self.database.list_students
         else : # Nếu có truyền vào (kết quả tìm kiếm) -> Chỉ hiển thị danh sách đó
             list_students = data_list
+            self.current_page = 1
+        # Xem có bao nhiêu sinh viên
+        total_items = len(list_students)
+        # Cần bao nhiêu trang ( làm tròn lên )
+        self.total_pages = math.ceil(total_items / self.limit)
+        if self.total_pages == 0: self.total_pages = 1
+        # Đảm bảo trang hiện tại không vượt quá giới hạn ( từ 1 -> total_pages )
+        if self.current_page > self.total_pages :
+            self.current_page = self.total_pages
+        if self.current_page < 1:
+            self.current_page = 1
+        # Tính vị trí bắt đầu và kết thúc
+        start_index = (self.current_page - 1) * self.limit
+        end_index = start_index + self.limit
+        # Cắt lấy danh sách con (chỉ lấy 20 bạn cần hiển thị)
+        page_student = list_students[start_index:end_index]
+        # 3. Hiển thị lên bảng
+        table = self.ui.studentsTableWidget
+        # --- TỐI ƯU HÓA TỐC ĐỘ ---
+        table.setSortingEnabled(False)  # Tắt sắp xếp (quan trọng nhất)
+        table.setRowCount(0)  # Xóa sạch bảng
+        # -------------------------
 
-        for row_index, student in enumerate(list_students):
+        for row_index, student in enumerate(page_student):
             table.insertRow(row_index)
             #Thêm thông tin sinh viên
             table.setItem(row_index, 0, IDWidgetItem(student.ID))
@@ -79,6 +104,20 @@ class MainWindow(QMainWindow):
             TableHelper.add_button_to_tableWidget(self, self.ui.studentsTableWidget, row_index, 6,
                                                   student, self.edit_student_from_table, self.delete_student_from_table)
         table.setSortingEnabled(True) # Bật lại sắp xếp để user bấm vào tiêu đề cột
+        # Cập nhật thông tin số trang
+        self.ui.lbl_page_info.setText(f"Trang {self.current_page} / {self.total_pages}")
+        # Ẩn/Hiện nút bấm
+        self.ui.btn_prev.setEnabled(self.current_page > 1)
+        self.ui.btn_next.setEnabled(self.current_page < self.total_pages)
+
+    def prev_page(self):
+        if self.current_page > 1:
+            self.current_page -= 1
+            self.load_data_to_table(self.list_search)
+    def next_page(self):
+        if self.current_page < self.total_pages:
+            self.current_page += 1
+            self.load_data_to_table(self.list_search)
 
     def get_data_dialog(self):
         ID = self.function_dialog.lineEdit_ID.text().strip()
@@ -185,11 +224,11 @@ class MainWindow(QMainWindow):
     def search_student(self):
         # Từ khóa muốn tìm kiếm
         keyword = self.ui.lineEdit_search_student.text().strip().lower()
-        results = [] # Tất cả student có liên quan
+        self.list_search = [] # Tất cả student có liên quan
         for student in self.database.list_students:
             if keyword in student.ID.lower() or keyword in student.full_name.lower() or keyword in student.Class.lower():
-                results.append(student)
-        self.load_data_to_table(results)
+                self.list_search.append(student)
+        self.load_data_to_table(self.list_search)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
