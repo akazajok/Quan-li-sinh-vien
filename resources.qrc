@@ -1,13 +1,13 @@
 <RCC>
   <qresource prefix="icons">
+    <file>icons/delete.png</file>
+    <file>icons/edit.png</file>
     <file>icons/admin-panel.png</file>
     <file>icons/menu.png</file>
     <file>icons/add-friend.png</file>
     <file>icons/dashboard.png</file>
-    <file>icons/delete.png</file>
     <file>icons/house.png</file>
     <file>icons/Logo_PTIT_University.png</file>
-    <file>icons/school.png</file>
     <file>icons/search.png</file>
     <file>icons/student.png</file>
   </qresource>

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>295</width>
-    <height>300</height>
+    <width>400</width>
+    <height>501</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -78,10 +78,24 @@
       </widget>
      </item>
      <item row="0" column="1">
-      <widget class="QLineEdit" name="lineEdit_ID"/>
+      <widget class="QLineEdit" name="lineEdit_ID">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>35</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit_fullName"/>
+      <widget class="QLineEdit" name="lineEdit_fullName">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>35</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="4" column="0">
       <widget class="QLabel" name="Label_class">
@@ -98,13 +112,33 @@
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QLineEdit" name="lineEdit_GPA"/>
+      <widget class="QLineEdit" name="lineEdit_GPA">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>35</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLineEdit" name="lineEdit_class"/>
+      <widget class="QLineEdit" name="lineEdit_class">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>35</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item row="2" column="1">
       <widget class="QDateEdit" name="dateEdit_DateBirth">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>35</height>
+        </size>
+       </property>
        <property name="displayFormat">
         <string>dd/MM/yyyy</string>
        </property>
@@ -115,6 +149,12 @@
      </item>
      <item row="3" column="1">
       <widget class="QComboBox" name="comboBox_gender">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>35</height>
+        </size>
+       </property>
        <item>
         <property name="text">
          <string>Nam</string>

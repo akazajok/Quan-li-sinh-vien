@@ -1,6 +1,6 @@
-# config_ui.py
-from PyQt5.QtWidgets import QPushButton, QWidget, QHBoxLayout, QTableWidgetItem
-
+from PyQt5.QtWidgets import QPushButton, QWidget, QHBoxLayout
+from PyQt5.QtGui import QIcon, QColor
+from PyQt5.QtCore import QSize
 
 class TableHelper:
     """Class này chuyên giúp xử lý các việc phức tạp trên TableWidget"""
@@ -14,9 +14,18 @@ class TableHelper:
         # 1. Tạo widget chứa
         container = QWidget()
         layout = QHBoxLayout()
-        # 2. Tạo button
-        btn_edit = QPushButton("Sửa")
-        btn_delete = QPushButton("Xóa")
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+        # 2. Tạo button edit
+        btn_edit = QPushButton("")
+        btn_edit.setIcon(QIcon(":/icons/icons/edit.png"))
+        btn_edit.setIconSize(QSize(20, 20))
+        btn_edit.setToolTip("Sửa thông tin")
+        # 2. Tạo button delete
+        btn_delete = QPushButton("")
+        btn_delete.setIcon(QIcon(":/icons/icons/delete.png"))
+        btn_delete.setIconSize(QSize(20, 20))
+        btn_delete.setToolTip("Xóa sinh viên")
         # 3. Gom vào layout
         layout.addWidget(btn_delete)
         layout.addWidget(btn_edit)
