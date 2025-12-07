@@ -22,7 +22,8 @@ if os.name == 'nt':
 # --- KHỐI IMPORT QUAN TRỌNG ---
 try:
     from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox
-    from PyQt5.QtCore import QDate, Qt
+    from PyQt5 import QtCore
+    from PyQt5.QtCore import QDate, Qt, QPropertyAnimation, QEasingCurve
     from PyQt5.QtWidgets import QVBoxLayout  # Cần thêm cái này để bố trí biểu đồ
     # --- Import thư viện vẽ biểu đồ ---
     from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -104,6 +105,12 @@ class MainWindow(QMainWindow):
         self.ui.btn_prev.clicked.connect(self.prev_page)
         self.ui.btn_next.clicked.connect(self.next_page)
         self.ui.txt_page.returnPressed.connect(self.show_page)
+
+        # Định nghĩa chiều rộng của sidebar
+        self.sidebar_expanded = True  # Mặc định là đang mở to
+        # --- Cấu hình cho Sidebar Menu (QUAN TRỌNG: Cần khai báo biến này) ---
+        self.width_standard = 250  # Độ rộng khi mở to (khớp với Qt Designer)
+        self.width_collapsed = 60  # Độ rộng khi thu nhỏ
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
         self.update_dashboard()
@@ -111,6 +118,24 @@ class MainWindow(QMainWindow):
         self.ui.btn_add_student.clicked.connect(self.add_student_from_table)
         # Tìm kiếm sinh viên
         self.ui.lineEdit_search_student.textChanged.connect(self.search_student)
+        # Kết nối nút Menu với hàm xử lý
+        self.ui.btn_menu.clicked.connect(self.toggle_menu)
+        self.ui.sidebar.setMaximumWidth(250)
+        self.ui.sidebar.setMinimumWidth(250)
+        new_icon_size = QtCore.QSize(50, 50)  # Kích thước mới (40x40)
+        self.ui.btn_menu.setIconSize(new_icon_size)
+        self.ui.btn_Dashboard.setIconSize(new_icon_size)
+        self.ui.btn_sinh_vien.setIconSize(new_icon_size)
+        self.ui.btn_dashboard.setIconSize(new_icon_size)
+        # Nút Trang chủ -> Hiện màn hình HomePage
+        self.ui.btn_Dashboard.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.HomePage))
+        # Nút Sinh viên -> Hiện màn hình quản lý sinh viên
+        self.ui.btn_sinh_vien.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.studentsPage))
+        # Nút Thống kê -> Hiện màn hình biểu đồ
+        self.ui.btn_dashboard.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.page_dashboard))
+        # Mặc định khi mở lên sẽ vào trang "Trang chủ"
+        self.ui.stackedWidget.setCurrentWidget(self.ui.HomePage)
+        # ---------------------------------------------------------
 
     def load_data_to_table(self, data_list=None):
         # Nếu không truyền dữ liệu vào (data_list là None) -> Lấy tất cả sinh viên
@@ -387,6 +412,54 @@ class MainWindow(QMainWindow):
         if self.ui.widget_chart_gpa.layout() is None:
             self.ui.verticalLayout_gpa = QVBoxLayout(self.ui.widget_chart_gpa)
         self.ui.verticalLayout_gpa.addWidget(self.canvas_gpa)
+
+    def toggle_menu(self):
+        # Lấy độ rộng hiện tại
+        width = self.ui.sidebar.width()
+
+        # --- ĐIỀU CHỈNH ĐỘ RỘNG Ở ĐÂY ---
+        collapsed_width = 100  # Độ rộng khi thu nhỏ (Tăng từ 70 -> 100)
+        expanded_width = 250  # Độ rộng khi mở to
+
+        if width == collapsed_width:
+            new_width = expanded_width
+            # Hiện lại chữ
+            self.ui.appTitle.setVisible(True)
+            self.ui.appSubitle.setVisible(True)
+            self.ui.profileName.setVisible(True)
+            self.ui.profileEmail.setVisible(True)
+            self.ui.LogoPtit.setVisible(True)
+
+            # Khôi phục chữ cho các nút
+            self.ui.btn_Dashboard.setText("  Trang chủ")
+            self.ui.btn_sinh_vien.setText("  Sinh Viên")
+            self.ui.btn_dashboard.setText("  Thống kê")
+            self.ui.btn_menu.setText("  MENU")
+        else:
+            new_width = collapsed_width
+            # Ẩn chữ
+            self.ui.appTitle.setVisible(False)
+            self.ui.appSubitle.setVisible(False)
+            self.ui.profileName.setVisible(False)
+            self.ui.profileEmail.setVisible(False)
+            self.ui.LogoPtit.setVisible(False)
+
+            # Xóa chữ trên các nút, chỉ để lại Icon
+            self.ui.btn_Dashboard.setText("")
+            self.ui.btn_sinh_vien.setText("")
+            self.ui.btn_dashboard.setText("")
+            self.ui.btn_menu.setText("")
+
+        # Chạy Animation
+        self.animation = QPropertyAnimation(self.ui.sidebar, b"minimumWidth")
+        self.animation.setDuration(300)
+        self.animation.setStartValue(width)
+        self.animation.setEndValue(new_width)
+        self.animation.setEasingCurve(QEasingCurve.InOutQuart)
+        self.animation.start()
+
+        # Cập nhật maximumWidth để giữ cố định kích thước mới
+        self.ui.sidebar.setMaximumWidth(new_width)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
