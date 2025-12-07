@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QDialog
 from PyQt5.QtCore import QDate
 from pyexpat.errors import messages
-
+import resources_rc  # Import Icons
 from Student_management import Ui_MainWindow  # File giao diện gốc (auto-generated)
 from function_dialog import Ui_Dialog # file # File giao diện cập nhật sinh viên
 from config_ui import TableHelper  # File trợ lý bạn vừa tạo

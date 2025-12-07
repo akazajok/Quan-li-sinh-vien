@@ -10,7 +10,7 @@ class Student:
         self.DateOfBirth = DateOfBirth
         self.Gender = Gender
         self.Class = Class
-        try :
+        try :   
             self.GPA = float(GPA)
             if self.GPA < 0 or self.GPA > 4:
                 raise ValueError(f"Điểm GPA không hợp lệ! Phải từ 0.0 đến 4.0")

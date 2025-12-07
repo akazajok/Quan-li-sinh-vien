@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>706</width>
-    <height>330</height>
+    <width>624</width>
+    <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,8 +25,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>686</width>
-         <height>289</height>
+         <width>604</width>
+         <height>359</height>
         </rect>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,4">
@@ -38,8 +38,23 @@
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <item>
                <widget class="QLabel" name="LogoPtit">
+                <property name="minimumSize">
+                 <size>
+                  <width>100</width>
+                  <height>100</height>
+                 </size>
+                </property>
                 <property name="text">
-                 <string>TextLabel</string>
+                 <string/>
+                </property>
+                <property name="pixmap">
+                 <pixmap resource="resources.qrc">:/icons/icons/Logo_PTIT_University.png</pixmap>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -66,46 +81,55 @@
            </item>
            <item>
             <widget class="QWidget" name="navigationWidget" native="true">
-             <layout class="QFormLayout" name="formLayout">
-              <item row="0" column="0">
-               <widget class="QLabel" name="LogoMenu">
-                <property name="text">
-                 <string>TextLabel</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="LogoHome">
-                <property name="text">
-                 <string>TextLabel</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QLabel" name="LogoStudents">
-                <property name="text">
-                 <string>TextLabel</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
+             <layout class="QVBoxLayout" name="verticalLayout_3">
+              <item>
                <widget class="QPushButton" name="btn_menu">
                 <property name="text">
-                 <string>menu</string>
+                 <string>  MENU</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/icons/icons/menu.png</normaloff>:/icons/icons/menu.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
+              <item>
                <widget class="QPushButton" name="btn_Dashboard">
                 <property name="text">
                  <string>  Trang chủ</string>
                 </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/icons/icons/house.png</normaloff>:/icons/icons/house.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
                </widget>
               </item>
-              <item row="2" column="1">
+              <item>
                <widget class="QPushButton" name="btn_sinh_vien">
                 <property name="text">
                  <string>  Sinh Viên</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/icons/icons/student.png</normaloff>:/icons/icons/student.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -130,8 +154,20 @@
              <layout class="QHBoxLayout" name="horizontalLayout_4">
               <item>
                <widget class="QLabel" name="profileAvatar">
+                <property name="maximumSize">
+                 <size>
+                  <width>32</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="text">
-                 <string>TextLabel</string>
+                 <string/>
+                </property>
+                <property name="pixmap">
+                 <pixmap resource="resources.qrc">:/icons/icons/admin-panel.png</pixmap>
+                </property>
+                <property name="scaledContents">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -140,14 +176,14 @@
                 <item>
                  <widget class="QLabel" name="profileName">
                   <property name="text">
-                   <string>TextLabel</string>
+                   <string>Quản trị viên</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="profileEmail">
                   <property name="text">
-                   <string>TextLabel</string>
+                   <string>adim@gmail.com</string>
                   </property>
                  </widget>
                 </item>
@@ -162,7 +198,7 @@
         <item>
          <widget class="QStackedWidget" name="stackedWidget">
           <property name="currentIndex">
-           <number>1</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="HomePage">
            <layout class="QVBoxLayout" name="verticalLayout_5" stretch="1,4">
@@ -196,8 +232,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>98</width>
-                 <height>28</height>
+                 <width>370</width>
+                 <height>252</height>
                 </rect>
                </property>
               </widget>
@@ -235,8 +271,20 @@
                  <layout class="QHBoxLayout" name="horizontalLayout_5">
                   <item>
                    <widget class="QLabel" name="Logo_Search">
+                    <property name="maximumSize">
+                     <size>
+                      <width>24</width>
+                      <height>24</height>
+                     </size>
+                    </property>
                     <property name="text">
-                     <string>TextLabel</string>
+                     <string/>
+                    </property>
+                    <property name="pixmap">
+                     <pixmap resource="resources.qrc">:/icons/icons/search.png</pixmap>
+                    </property>
+                    <property name="scaledContents">
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -247,6 +295,10 @@
                    <widget class="QPushButton" name="btn_add_student">
                     <property name="text">
                      <string>Thêm sinh viên</string>
+                    </property>
+                    <property name="icon">
+                     <iconset resource="resources.qrc">
+                      <normaloff>:/icons/icons/add-friend.png</normaloff>:/icons/icons/add-friend.png</iconset>
                     </property>
                    </widget>
                   </item>
@@ -332,6 +384,8 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
