@@ -1,7 +1,10 @@
 import csv
 import os
+from linecache import checkcache
 
 from numpy.f2py.crackfortran import expectbegin
+from pyexpat.errors import messages
+
 
 class Student:
     def __init__(self, ID, full_name, DateOfBirth, Gender, Class, GPA):
@@ -21,11 +24,10 @@ class Student:
 class CsvData:
     def __init__(self, filename = "database.csv"):
         self.csv_file = filename
-        self.list_data = []
-        self.get_data_Csv()
-
-    def get_data_Csv(self):
         self.list_students = []
+        self.load_data_Csv()
+
+    def load_data_Csv(self):
         try :
             with open(self.csv_file, 'r', encoding="utf-8-sig", newline='') as csvfile:
                 reader = csv.reader(csvfile)
@@ -56,13 +58,15 @@ class CsvData:
         except Exception as e:
             print(f"Lỗi khi đọc file: {e}")
 
-    def add_student(self, new_student):
+    def check_data_dialog(self, new_student):
         if not new_student.ID or not new_student.full_name or not new_student.Class or not new_student.GPA:
             return False, f"Bạn phải nhập ĐẦY ĐỦ thông tin sinh viên"
         for student in self.list_students:
             if new_student.ID == student.ID:
                 return False, f"Mã sinh viên {new_student.ID} đã tồn tại!"
+        return True, "Dữ liệu ổn"
 
+    def add_student(self, new_student):
         self.list_students.append(new_student)
         try:
             with open(self.csv_file, 'a', encoding="utf-8-sig", newline='') as csvfile:
@@ -71,7 +75,13 @@ class CsvData:
                     new_student.ID, new_student.full_name, new_student.DateOfBirth,
                     new_student.Gender, new_student.Class, new_student.GPA
                 ])
-            return True, "Thêm sinh viên thành công"
+            return "Thêm sinh viên thành công"
         except Exception as e:
-            return False, f"Lỗi đọc file {e}"
-            
+            return f"Lỗi đọc file {e}"
+    def edit_student(self, new_student, old_student):
+        for student in self.list_students:
+            if old_student == student:
+                student = new_student
+                self.update_data_Csv()
+                return "Thay đổi thôn tin sinh viên thành công"
+                break

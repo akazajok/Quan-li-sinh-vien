@@ -19,7 +19,7 @@ class MainWindow(QMainWindow):
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
         # Thêm dữ liệu
-        self.ui.btn_add_student.clicked.connect(self.add_student_to_table)
+        self.ui.btn_add_student.clicked.connect(self.add_student_from_table)
 
     def load_data_to_table(self):
         table = self.ui.studentsTableWidget
@@ -38,7 +38,8 @@ class MainWindow(QMainWindow):
             table.setItem(row_index, 4, QTableWidgetItem(student.Class))
             table.setItem(row_index, 5, QTableWidgetItem(f"{student.GPA:.2f}"))
             #Thêm nút xóa, sửa
-            TableHelper.add_button_to_tableWidget(self, self.ui.studentsTableWidget, row_index, 6)
+            TableHelper.add_button_to_tableWidget(self, self.ui.studentsTableWidget, row_index, 6,
+                                                  student, self.edit_student_from_table, self.delete_student_from_table)
         table.setSortingEnabled(True) # Bật lại sắp xếp để user bấm vào tiêu đề cột
 
     def get_data_dialog(self):
@@ -50,25 +51,26 @@ class MainWindow(QMainWindow):
         GPA = self.function_dialog.lineEdit_GPA.text().strip()
         return Student( ID, full_name, DateOfBirth, Gender, Class, GPA)
 
-    def add_student_to_table(self):
+    def add_student_from_table(self):
         #load giao diện thêm, sửa sinh viên ( function_dialog )
         dialog_window = QDialog()
         self.function_dialog.setupUi(dialog_window)
         def check_data() :
             try :
                 new_student = self.get_data_dialog()
-                succes , message = self.database.add_student(new_student)
+                succes , message = self.database.check_data_dialog(new_student)
                 if succes :
+                    message = self.database.add_student(new_student)
                     QMessageBox.information(self, "Thông báo" , message)
-                    self.load_data_to_table()
                     dialog_window.accept()
-                else :
+                    self.load_data_to_table()
+                else:
                     QMessageBox.critical(dialog_window, "Lỗi" , message)
             except Exception as e :
                 QMessageBox.warning(dialog_window, "Dữ liệu không hợp lệ" , str(e))
 
         # Bấm nút hủy thoát khỏi giao diện
-        self.function_dialog.btn_cancel.clicked.connect( dialog_window.reject)
+        self.function_dialog.btn_cancel.clicked.connect( dialog_window.reject )
         # Ngắt kết nối cũ tránh bấm 1 lần thành 2 lần
         try:
             self.function_dialog.btn_update_infor.clicked.disconnect()
@@ -77,6 +79,39 @@ class MainWindow(QMainWindow):
         self.function_dialog.btn_update_infor.clicked.connect( check_data )
         #-----Hiên thị dialog_window---------
         dialog_window.exec_()
+
+    def edit_student_from_table(self):
+        # load dialog lên để chỉnh sửa thông tin
+        dialog_window = QDialog()
+        self.function_dialog.setupUi(dialog_window)
+
+        sender_button = self.sender() # để biết mình ấn vào nút edit nào
+        old_student = sender_button.inf_student # lấy thông tin student cần sửa
+        # điền thông tin student cần sửa lên dialog
+        dialog_window.lineEdit_ID.setText(old_student.ID)
+        dialog_window.lineEdit_fullName.setText(old_student.full_name)
+        dialog_window.lineEdit_GPA.setText(old_student.DateOfBirth)
+        dialog_window.lineEdit_gender.setText(old_student.gender)
+        dialog_window.lineEdit_class.setText(old_student.Class)
+        dialog_window.lineEdit_ID.setText(old_student.GPA)
+
+        try :
+            new_student = self.get_data_dialog()
+            succes , message = self.database.check_data_dialog(new_student)
+            if succes :
+                message = self.database.edit_student(new_student, old_student)
+                QMessageBox.information(self, "Thông báo" , message)
+                dialog_window.accept()
+                self.load_data_to_table()
+            else:
+                QMessageBox.critical(self, "Lỗi" , message)
+        except Exception as e:
+            QMessageBox.warning(dialog_window, "Dữ liệu không hợp lệ", str(e))
+
+        dialog_window.exec_()
+
+    def delete_student_from_table(self):
+        pass
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
