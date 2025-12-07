@@ -1,31 +1,58 @@
+import os
 import sys
-import re
 import math
-
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QDialog
-from PyQt5.QtCore import QDate
+import re  # Quan trọng: Import thư viện xử lý chuỗi
 from datetime import datetime
-from pyexpat.errors import messages
-import resources_rc  # Import Icons
-from Student_management import Ui_MainWindow  # File giao diện gốc (auto-generated)
-from function_dialog import Ui_Dialog  # File giao diện cập nhật sinh viên
-from config_ui import TableHelper  # File xử lí giao diện khó
-from database import CsvData, Student # file lưu trữ data sinh viên, load csv
+# --- BẮT BUỘC PHẢI CÓ KHI DÙNG MINICONDA ĐỂ CHẠY DEBUG ---
+if os.name == 'nt' and 'CONDA_PREFIX' in os.environ:
+    # Chỉ đường cho PyQt5 tìm thấy file hệ thống trong Conda
+    plugin_path = os.path.join(os.environ['CONDA_PREFIX'], 'Library', 'plugins', 'platforms')
+    if os.path.exists(plugin_path):
+        os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
+# ---------------------------------------------------------
+
+# --- KHỐI IMPORT QUAN TRỌNG ---
+try:
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox
+    from PyQt5.QtCore import QDate, Qt
+except ImportError as e:
+    print(f"LỖI NGHIÊM TRỌNG: Không tìm thấy thư viện PyQt5. Hãy chạy 'pip install PyQt5'. Chi tiết: {e}")
+    sys.exit(1)
+
+# --- IMPORT CÁC FILE TRONG DỰ ÁN ---
+try:
+    # Nếu báo lỗi ở đây -> Chạy lệnh: pyrcc5 resources.qrc -o resources_rc.py
+    import resources_rc
+    from Student_management import Ui_MainWindow
+    from function_dialog import Ui_Dialog
+    from config_ui import TableHelper
+    from database import CsvData, Student
+except ImportError as e:
+    print(f"LỖI IMPORT FILE DỰ ÁN: {e}")
+    print("Gợi ý: Kiểm tra xem đã chạy lệnh 'pyrcc5' chưa hoặc file database.py có lỗi không.")
+    sys.exit(1)
 
 class IDWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
+        if (not other) or (not hasattr(other, 'text')):
+            return False
         try:
-            # Hàm tách chuỗi thành các phần nhỏ: số ra số, chữ ra chữ
-            # Ví dụ: "D21CNTT02" -> ['D', 21, 'CNTT', 2]
             def natural_keys(text):
-                return [ int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', text) ]
+                if not text :
+                    return []
+                # Hàm tách chuỗi thành các phần nhỏ: số ra số, chữ ra chữ
+                # Ví dụ: "D21CNTT02" -> ['D', 21, 'CNTT', 2]
+                return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', text)]
+
             return natural_keys(self.text()) < natural_keys(other.text())
-        except ValueError:
+        except Exception:
             # Nếu lỗi (ví dụ ô trống hoặc sai định dạng), dùng cách so sánh mặc định
             return super().__lt__(other)
 
 class DateWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
+        if (not other) or (not hasattr(other, 'text')):
+            return False
         try:
             # Lấy text của 2 ô đang so sánh
             date_str1 = self.text().strip()
@@ -36,7 +63,7 @@ class DateWidgetItem(QTableWidgetItem):
             date2 = datetime.strptime(date_str2, '%d/%m/%Y')
 
             return date1 < date2
-        except ValueError:
+        except Exception:
             # Nếu lỗi (ví dụ ô trống hoặc sai định dạng), dùng cách so sánh mặc định
             return super().__lt__(other)
 
@@ -48,7 +75,7 @@ class MainWindow(QMainWindow):
         self.function_dialog = Ui_Dialog()
         self.database = CsvData()
 
-        self.list_search = [] # tạo danh sách cần tìm kiếm
+        self.list_search = None # tạo danh sách cần tìm kiếm
 
         self.current_page = 1  # Trang hiện tại
         self.limit = 20  # Số dòng mỗi trang
@@ -68,7 +95,7 @@ class MainWindow(QMainWindow):
             list_students = self.database.list_students
         else : # Nếu có truyền vào (kết quả tìm kiếm) -> Chỉ hiển thị danh sách đó
             list_students = data_list
-            self.current_page = 1
+
         # Xem có bao nhiêu sinh viên
         total_items = len(list_students)
         # Cần bao nhiêu trang ( làm tròn lên )
@@ -138,6 +165,9 @@ class MainWindow(QMainWindow):
                 succes , message = self.database.add_student(new_student)
                 if succes :
                     QMessageBox.information(self, "Thông báo" , message)
+                    # Nếu đang không tìm kiếm thì reset về trang cuối để thấy SV mới
+                    if self.list_search is None:
+                        self.current_page = self.total_pages
                     self.load_data_to_table()
                     dialog_window.accept()
                 else:
@@ -224,10 +254,14 @@ class MainWindow(QMainWindow):
     def search_student(self):
         # Từ khóa muốn tìm kiếm
         keyword = self.ui.lineEdit_search_student.text().strip().lower()
-        self.list_search = [] # Tất cả student có liên quan
-        for student in self.database.list_students:
-            if keyword in student.ID.lower() or keyword in student.full_name.lower() or keyword in student.Class.lower():
-                self.list_search.append(student)
+        if keyword == "" :
+            self.list_search = None
+        else :
+            self.list_search = [] # Tất cả student có liên quan
+            for student in self.database.list_students:
+                if keyword in student.ID.lower() or keyword in student.full_name.lower() or keyword in student.Class.lower():
+                    self.list_search.append(student)
+        self.current_page = 1
         self.load_data_to_table(self.list_search)
 
 if __name__ == "__main__":

@@ -1,10 +1,4 @@
 import csv
-import os
-from linecache import checkcache
-
-from numpy.f2py.crackfortran import expectbegin
-from pyexpat.errors import messages
-
 
 class Student:
     def __init__(self, ID, full_name, DateOfBirth, Gender, Class, GPA):

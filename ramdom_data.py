@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta
 
 # --- CẤU HÌNH ---
-SO_LUONG_SINH_VIEN = 3000  # Số lượng sinh viên muốn tạo (Bạn có thể tăng lên 10000 nếu thích)
+SO_LUONG_SINH_VIEN = 5000  # Số lượng sinh viên muốn tạo (Bạn có thể tăng lên 10000 nếu thích)
 FILE_NAME = "database.csv"
 
 # --- DỮ LIỆU MẪU VIỆT NAM ---
@@ -61,7 +61,7 @@ def tao_gpa():
     - 10% cơ hội được >= 3.6 (Xuất sắc)
     - 90% cơ hội từ 1.5 đến 3.59 (Trung bình - Khá - Giỏi)
     """
-    if random.random() < 0.1:  # 10% tỉ lệ rơi vào đây
+    if random.random() < 0.15:  # 15% tỉ lệ rơi vào đây
         # Random từ 3.60 đến 4.00
         gpa = random.uniform(3.6, 4.0)
     else:
