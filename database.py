@@ -58,15 +58,12 @@ class CsvData:
         except Exception as e:
             print(f"Lỗi khi đọc file: {e}")
 
-    def check_data_dialog(self, new_student):
+    def add_student(self, new_student):
         if not new_student.ID or not new_student.full_name or not new_student.Class or not new_student.GPA:
             return False, f"Bạn phải nhập ĐẦY ĐỦ thông tin sinh viên"
         for student in self.list_students:
             if new_student.ID == student.ID:
                 return False, f"Mã sinh viên {new_student.ID} đã tồn tại!"
-        return True, "Dữ liệu ổn"
-
-    def add_student(self, new_student):
         self.list_students.append(new_student)
         try:
             with open(self.csv_file, 'a', encoding="utf-8-sig", newline='') as csvfile:
@@ -75,13 +72,27 @@ class CsvData:
                     new_student.ID, new_student.full_name, new_student.DateOfBirth,
                     new_student.Gender, new_student.Class, new_student.GPA
                 ])
-            return "Thêm sinh viên thành công"
+            return True, "Thêm sinh viên thành công"
         except Exception as e:
-            return f"Lỗi đọc file {e}"
+            return False, f"Lỗi đọc file {e}"
+
     def edit_student(self, new_student, old_student):
+        if not new_student.ID or not new_student.full_name or not new_student.Class or not new_student.GPA:
+            return False, f"Bạn phải nhập ĐẦY ĐỦ thông tin sinh viên"
+        if new_student.ID != old_student.ID:
+            for student in self.list_students:
+                if new_student.ID == student.ID:
+                    return False, f"Mã sinh viên {new_student.ID} đã tồn tại!"
         for index, student in enumerate(self.list_students):
             if old_student == student:
                 self.list_students[index] = new_student
                 self.update_data_Csv()
-                return "Thay đổi thôn tin sinh viên thành công"
-        return "Không tìm thấy sinh viên"
+                return True, "Thay đổi thôn tin sinh viên thành công"
+        return False, "Không tìm thấy sinh viên"
+    def delete_student(self, student):
+        for s in self.list_students:
+            if s.ID == student.ID:
+                self.list_students.remove(s)
+                self.update_data_Csv()
+                return True, "Xóa sinh viên thành công"
+        return False, "Không tìm thấy sinh viên này trong hệ thống!"

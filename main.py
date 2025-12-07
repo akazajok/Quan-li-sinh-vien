@@ -18,16 +18,23 @@ class MainWindow(QMainWindow):
         self.database = CsvData()
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
-        # Thêm dữ liệu
+        # Thêm dữ liệu sinh viên
         self.ui.btn_add_student.clicked.connect(self.add_student_from_table)
+        # Tìm kiếm sinh viên
+        self.ui.lineEdit_search_student.textChanged.connect(self.search_student)
 
-    def load_data_to_table(self):
+    def load_data_to_table(self, data_list=None):
         table = self.ui.studentsTableWidget
         # --- TỐI ƯU HÓA TỐC ĐỘ ---
         table.setSortingEnabled(False)  # Tắt sắp xếp (quan trọng nhất)
         table.setRowCount(0)  # Xóa sạch bảng
         # -------------------------
-        list_students = self.database.list_students
+        # Nếu không truyền dữ liệu vào (data_list là None) -> Lấy tất cả sinh viên
+        if data_list is None:
+            list_students = self.database.list_students
+        else : # Nếu có truyền vào (kết quả tìm kiếm) -> Chỉ hiển thị danh sách đó
+            list_students = data_list
+
         for row_index, student in enumerate(list_students):
             table.insertRow(row_index)
             #Thêm thông tin sinh viên
@@ -58,12 +65,11 @@ class MainWindow(QMainWindow):
         def save_student() :
             try :
                 new_student = self.get_data_dialog()
-                succes , message = self.database.check_data_dialog(new_student)
+                succes , message = self.database.add_student(new_student)
                 if succes :
-                    message = self.database.add_student(new_student)
                     QMessageBox.information(self, "Thông báo" , message)
-                    dialog_window.accept()
                     self.load_data_to_table()
+                    dialog_window.accept()
                 else:
                     QMessageBox.critical(dialog_window, "Lỗi" , message)
             except Exception as e :
@@ -86,23 +92,29 @@ class MainWindow(QMainWindow):
         self.function_dialog.setupUi(dialog_window)
 
         sender_button = self.sender() # để biết mình ấn vào nút edit nào
-        old_student = sender_button.inf_student # lấy thông tin student cần sửa
+        old_student = sender_button.property("inf_student") # lấy thông tin student cần sửa
         # điền thông tin student cần sửa lên dialog
         self.function_dialog.lineEdit_ID.setText(old_student.ID)
         self.function_dialog.lineEdit_fullName.setText(old_student.full_name)
-        self.function_dialog.dateEdit_DateBirth.setText(old_student.DateOfBirth)
+        try:
+            # Chuyển chuỗi ngày (ví dụ "20/11/2005") thành đối tượng QDate
+            # Lưu ý: "dd/MM/yyyy" phải khớp với định dạng ngày bạn lưu trong file CSV
+            qdate = QDate.fromString(old_student.DateOfBirth, "dd/MM/yyyy")
+            # Gán vào widget QDateEdit bằng lệnh setDate
+            self.function_dialog.dateEdit_DateBirth.setDate(qdate)
+        except Exception as e:
+            print(f"Lỗi ngày tháng: {e}")
         self.function_dialog.comboBox_gender.setCurrentText(old_student.Gender)
         self.function_dialog.lineEdit_class.setText(old_student.Class)
         self.function_dialog.lineEdit_GPA.setText(f"{old_student.GPA:.2f}")
         def save_student() :
             try :
                 new_student = self.get_data_dialog()
-                succes , message = self.database.check_data_dialog(new_student)
+                succes , message = self.database.edit_student(new_student, old_student)
                 if succes :
-                    message = self.database.edit_student(new_student, old_student)
                     QMessageBox.information(self, "Thông báo" , message)
-                    dialog_window.accept()
                     self.load_data_to_table()
+                    dialog_window.accept()
                 else:
                     QMessageBox.critical(self, "Lỗi" , message)
             except Exception as e:
@@ -118,7 +130,35 @@ class MainWindow(QMainWindow):
         dialog_window.exec_()
 
     def delete_student_from_table(self):
-        pass
+        # 1. Lấy đối tượng sinh viên từ nút bấm (Sender)
+        sender_button = self.sender()
+        student = sender_button.property("inf_student")
+        # 2. Hiển thị hộp thoại xác nhận (Quan trọng!)
+        # QMessageBox.question(cha, tiêu_đề, nội_dung, nút_bấm)
+        reply = QMessageBox.question(
+            self,
+            "Xác nhận xóa",
+            f"Bạn có chắc chắn muốn xóa sinh viên:\n{student.full_name} (MSV: {student.ID})?\n\nHành động này không thể hoàn tác!",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No  # Mặc định chọn No để an toàn
+        )
+        # 3. Nêu muốn xóa thật
+        if reply == QMessageBox.Yes:
+            success, message = self.database.delete_student(student)
+            if success:
+                QMessageBox.information(self, "Thành công", message)
+                self.load_data_to_table()
+            else :
+                QMessageBox.warning(self, "Lỗi", message)
+
+    def search_student(self):
+        # Từ khóa muốn tìm kiếm
+        keyword = self.ui.lineEdit_search_student.text().strip().lower()
+        results = [] # Tất cả student có liên quan
+        for student in self.database.list_students:
+            if keyword in student.ID.lower() or keyword in student.full_name.lower() or keyword in student.Class.lower():
+                results.append(student)
+        self.load_data_to_table(results)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
