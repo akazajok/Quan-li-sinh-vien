@@ -1,12 +1,43 @@
 import sys
+import re
+
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QDialog
 from PyQt5.QtCore import QDate
+from datetime import datetime
 from pyexpat.errors import messages
 import resources_rc  # Import Icons
 from Student_management import Ui_MainWindow  # File giao diện gốc (auto-generated)
 from function_dialog import Ui_Dialog  # File giao diện cập nhật sinh viên
 from config_ui import TableHelper  # File xử lí giao diện khó
 from database import CsvData, Student # file lưu trữ data sinh viên, load csv
+
+class IDWidgetItem(QTableWidgetItem):
+    def __lt__(self, other):
+        try:
+            # Hàm tách chuỗi thành các phần nhỏ: số ra số, chữ ra chữ
+            # Ví dụ: "D21CNTT02" -> ['D', 21, 'CNTT', 2]
+            def natural_keys(text):
+                return [ int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', text) ]
+            return natural_keys(self.text()) < natural_keys(other.text())
+        except ValueError:
+            # Nếu lỗi (ví dụ ô trống hoặc sai định dạng), dùng cách so sánh mặc định
+            return super().__lt__(other)
+
+class DateWidgetItem(QTableWidgetItem):
+    def __lt__(self, other):
+        try:
+            # Lấy text của 2 ô đang so sánh
+            date_str1 = self.text().strip()
+            date_str2 = other.text().strip()
+            # Chuyển đổi từ chuỗi "dd/MM/yyyy" sang đối tượng ngày tháng để so sánh
+            # Nếu định dạng file csv của bạn khác, hãy sửa '%d/%m/%Y' tương ứng
+            date1 = datetime.strptime(date_str1, '%d/%m/%Y')
+            date2 = datetime.strptime(date_str2, '%d/%m/%Y')
+
+            return date1 < date2
+        except ValueError:
+            # Nếu lỗi (ví dụ ô trống hoặc sai định dạng), dùng cách so sánh mặc định
+            return super().__lt__(other)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -38,9 +69,9 @@ class MainWindow(QMainWindow):
         for row_index, student in enumerate(list_students):
             table.insertRow(row_index)
             #Thêm thông tin sinh viên
-            table.setItem(row_index, 0, QTableWidgetItem(student.ID))
+            table.setItem(row_index, 0, IDWidgetItem(student.ID))
             table.setItem(row_index, 1, QTableWidgetItem(student.full_name))
-            table.setItem(row_index, 2, QTableWidgetItem(student.DateOfBirth))
+            table.setItem(row_index, 2, DateWidgetItem(student.DateOfBirth))
             table.setItem(row_index, 3, QTableWidgetItem(student.Gender))
             table.setItem(row_index, 4, QTableWidgetItem(student.Class))
             table.setItem(row_index, 5, QTableWidgetItem(f"{student.GPA:.2f}"))
