@@ -2,7 +2,8 @@ import csv
 import random
 import calendar
 
-# ================= CẤU HÌNH DỮ LIỆU MẪU =================
+# ================= CẤU HÌNH DỮ LIỆU =================
+
 HO = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng",
       "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý", "Phí", "Đinh", "Trương", "Lương", "Trịnh"]
 
@@ -13,21 +14,34 @@ TEN_NAM = ["Hùng", "Dũng", "Cường", "Vinh", "Nam", "Sơn", "Tùng", "Phúc"
            "Hải", "Khánh"]
 TEN_NU = ["Lan", "Hương", "Trang", "Linh", "Mai", "Hoa", "Vân", "Anh", "Nga", "Huyền", "Ly", "Thư", "Tâm", "Hà", "Châu"]
 
-# Cấu trúc: (Khóa, Năm sinh, Các mã ngành)
-KHOA_HOC_INFO = [
-    ("D21", 2003, ["CNTT", "ATTT", "DTVT", "KT", "MKT"]),
-    ("D22", 2004, ["CNTT", "ATTT", "DTVT", "KT", "QTKD"]),
-    ("D23", 2005, ["CNTT", "ATTT", "DTVT", "KT", "TMDT"]),
-    ("D24", 2006, ["CNTT", "ATTT", "DTVT", "KT", "AI"]),
-    ("D25", 2007, ["CNTT", "ATTT", "DTVT", "KT", "LOG"])
-]
+# Cập nhật mã ngành AI -> DCTN
+MAP_NGANH = {
+    "CNTT": "DCCN",
+    "ATTT": "DCAT",
+    "DTVT": "DCVT",
+    "KT": "DCKT",
+    "MKT": "DCMK",
+    "QTKD": "DCQK",
+    "TMDT": "DCTM",
+    "AI": "DCTN",  # Đã đổi theo yêu cầu
+    "LOG": "DCLG"
+}
 
+# Thêm khóa D25
+KHOA_HOC = {
+    "D21": 2003,
+    "D22": 2004,
+    "D23": 2005,
+    "D24": 2006,
+    "D25": 2007  # Đã thêm
+}
+
+
+# ================= HÀM HỖ TRỢ =================
 
 def tao_ten_va_gioi_tinh():
-    """Tạo tên và giới tính khớp nhau"""
     is_nam = random.choice([True, False])
     ho = random.choice(HO)
-
     if is_nam:
         dem = random.choice(DEM_NAM)
         ten = random.choice(TEN_NAM)
@@ -36,102 +50,74 @@ def tao_ten_va_gioi_tinh():
         dem = random.choice(DEM_NU)
         ten = random.choice(TEN_NU)
         gioi_tinh = "Nữ"
-
-    full_name = f"{ho} {dem} {ten}"
-    return full_name, gioi_tinh
+    return f"{ho} {dem} {ten}", gioi_tinh
 
 
-def tao_ngay_sinh_chuan(year):
-    """Tạo ngày sinh hợp lệ (xử lý cả năm nhuận)"""
+def tao_ngay_sinh(year):
     month = random.randint(1, 12)
     _, max_day = calendar.monthrange(year, month)
     day = random.randint(1, max_day)
     return f"{day:02d}/{month:02d}/{year}"
 
 
-def tao_gpa_thuc_te():
-    """
-    Tạo GPA theo phân phối có trọng số để có cả người giỏi và người trượt.
-    """
-    # Định nghĩa các khoảng điểm và tỷ lệ xuất hiện (Trọng số)
-    ranges = [
-        ((0.0, 1.99), 10),  # 10% Sinh viên Yếu/Kém (Trượt)
-        ((2.0, 2.49), 20),  # 20% Sinh viên Trung bình
-        ((2.5, 3.19), 40),  # 40% Sinh viên Khá (Số đông)
-        ((3.2, 3.59), 20),  # 20% Sinh viên Giỏi
-        ((3.6, 4.0), 10)  # 10% Sinh viên Xuất sắc
-    ]
-
-    # Chọn ngẫu nhiên một khoảng dựa trên trọng số
-    selected_range = random.choices(
-        [r[0] for r in ranges],
-        weights=[r[1] for r in ranges]
-    )[0]
-
-    # Random con số cụ thể trong khoảng đó
-    gpa = random.uniform(selected_range[0], selected_range[1])
-    return round(gpa, 2)
+def tao_gpa():
+    # Tỉ lệ điểm: 5% Liệt | 15% TB | 50% Khá | 20% Giỏi | 10% Xuất sắc
+    weights = [0.05, 0.15, 0.50, 0.20, 0.10]
+    ranges = [(0.0, 1.9), (2.0, 2.4), (2.5, 3.19), (3.2, 3.59), (3.6, 4.0)]
+    selected_range = random.choices(ranges, weights=weights, k=1)[0]
+    return round(random.uniform(selected_range[0], selected_range[1]), 2)
 
 
-def tao_ma_sv(khoa, nganh, danh_sach_da_co):
-    """Tạo mã SV không trùng lặp"""
-    ma_nganh_code = {
-        "CNTT": "DCCN", "ATTT": "DCAT", "DTVT": "DCVT",
-        "KT": "DCKT", "MKT": "DCMK", "QTKD": "DCQK",
-        "TMDT": "DCTM", "AI": "DCAI", "LOG": "DCLG"
-    }.get(nganh, "DCXX")
+# ================= HÀM CHÍNH =================
 
-    while True:
-        stt = random.randint(1, 9999)  # Tăng lên 4 chữ số để chứa được nhiều SV hơn
-        msv = f"B{khoa[1:]}{ma_nganh_code}{stt:04d}"  # VD: B23DCCN0123
-        if msv not in danh_sach_da_co:
-            danh_sach_da_co.add(msv)
-            return msv
-
-
-def generate_data(filename='ramdom_data.csv', so_luong=1000):
-
+def generate_database(filename="database.csv"):
     data = []
-    existed_msv = set()
+    total_sv = 0
 
-    print(f"🔄 Đang khởi tạo dữ liệu cho {so_luong} sinh viên...")
+    print("🚀 Đang tạo dữ liệu (D21 - D25)...")
 
-    for i in range(so_luong):
-        # 1. Chọn khóa học
-        khoa_code, nam_sinh, list_nganh = random.choice(KHOA_HOC_INFO)
-        nganh = random.choice(list_nganh)
+    for khoa, nam_sinh in KHOA_HOC.items():
+        year_suffix = khoa[1:]  # Lấy chuỗi "21", "25"...
 
-        # 2. Tạo thông tin
-        msv = tao_ma_sv(khoa_code, nganh, existed_msv)
-        ho_ten, gioi_tinh = tao_ten_va_gioi_tinh()
-        ngay_sinh = tao_ngay_sinh_chuan(nam_sinh)
+        for ten_nganh, ma_sv_code in MAP_NGANH.items():
+            stt_sv = 1
 
-        # 3. Tạo Lớp (VD: D21CNTT01 - 05)
-        lop = f"{khoa_code}{nganh}{random.randint(1, 5):02d}"
+            # GIẢM SỐ LỚP: Chỉ tạo 1 lớp cho mỗi ngành để giảm tổng số SV
+            for i in range(1, 2):
+                ma_lop = f"{khoa}{ten_nganh}{i:02d}"
 
-        # 4. Tạo GPA theo logic mới (Có cả điểm trượt)
-        gpa = tao_gpa_thuc_te()
+                # GIẢM SĨ SỐ: 10 - 15 sinh viên/lớp
+                si_so_lop = random.randint(10, 15)
 
-        data.append([msv, ho_ten, ngay_sinh, gioi_tinh, lop, gpa])
+                for _ in range(si_so_lop):
+                    # Mã SV 3 số: :03d
+                    msv = f"B{year_suffix}{ma_sv_code}{stt_sv:03d}"
 
-        # In tiến trình mỗi khi xong 10% (để biết tool đang chạy)
-        if (i + 1) % (so_luong // 10) == 0:
-            print(f"   ...Đã tạo {i + 1}/{so_luong} sinh viên")
+                    ho_ten, gioi_tinh = tao_ten_va_gioi_tinh()
+                    ngay_sinh = tao_ngay_sinh(nam_sinh)
+                    gpa = tao_gpa()
 
-    # Sắp xếp danh sách
+                    # Thêm vào list (không có header như yêu cầu)
+                    data.append([msv, ho_ten, ngay_sinh, gioi_tinh, ma_lop, gpa])
+
+                    stt_sv += 1
+                    total_sv += 1
+
+    # Sắp xếp lại theo Lớp rồi đến Mã SV cho đẹp
     data.sort(key=lambda x: (x[4], x[0]))
 
-    # Ghi file
     try:
         with open(filename, mode='w', encoding='utf-8-sig', newline='') as f:
             writer = csv.writer(f)
             writer.writerows(data)
-        print(f"✅ HOÀN TẤT! Đã tạo file '{filename}' với {so_luong} dòng.")
-        print(f"   (Bao gồm cả sinh viên điểm thấp < 2.0 để test)")
+
+        print(f"✅ XONG! File '{filename}' đã được tạo.")
+        print(f"📊 Tổng số sinh viên: {total_sv}")
+        print("ℹ️  Thay đổi: Mã ngành AI -> DCTN, MSV 3 số, có khóa D25.")
+
     except Exception as e:
-        print(f"❌ Lỗi ghi file: {e}")
+        print(f"❌ Lỗi: {e}")
 
 
 if __name__ == "__main__":
-    # Tạo 1000 sinh viên để test thoải mái
-    generate_data('ramdom_data.csv', 1000)
+    generate_database()
