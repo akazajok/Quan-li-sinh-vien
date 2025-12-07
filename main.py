@@ -4,13 +4,21 @@ import math
 import re  # Quan trọng: Import thư viện xử lý chuỗi
 from datetime import datetime
 # --- BẮT BUỘC PHẢI CÓ KHI DÙNG MINICONDA ĐỂ CHẠY DEBUG ---
-if os.name == 'nt' and 'CONDA_PREFIX' in os.environ:
-    # Chỉ đường cho PyQt5 tìm thấy file hệ thống trong Conda
-    plugin_path = os.path.join(os.environ['CONDA_PREFIX'], 'Library', 'plugins', 'platforms')
+if os.name == 'nt':
+    # Thay vì tìm biến môi trường, ta dùng sys.prefix để lấy đường dẫn gốc của Python hiện tại
+    # Cách này hoạt động ổn định cả khi Run và Debug
+    base_path = sys.prefix
+
+    # Đường dẫn plugin chuẩn của Conda trên Windows
+    plugin_path = os.path.join(base_path, 'Library', 'plugins', 'platforms')
+
+    # Nếu không tìm thấy (ví dụ dùng Python thường không phải Conda), thử đường dẫn khác
+    if not os.path.exists(plugin_path):
+        plugin_path = os.path.join(base_path, 'Lib', 'site-packages', 'PyQt5', 'Qt5', 'plugins', 'platforms')
+
     if os.path.exists(plugin_path):
         os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 # ---------------------------------------------------------
-
 # --- KHỐI IMPORT QUAN TRỌNG ---
 try:
     from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox
@@ -82,6 +90,7 @@ class MainWindow(QMainWindow):
         self.total_pages = 1  # Tổng số trang
         self.ui.btn_prev.clicked.connect(self.prev_page)
         self.ui.btn_next.clicked.connect(self.next_page)
+        self.ui.txt_page.returnPressed.connect(self.show_page)
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
         # Thêm dữ liệu sinh viên
@@ -132,7 +141,8 @@ class MainWindow(QMainWindow):
                                                   student, self.edit_student_from_table, self.delete_student_from_table)
         table.setSortingEnabled(True) # Bật lại sắp xếp để user bấm vào tiêu đề cột
         # Cập nhật thông tin số trang
-        self.ui.lbl_page_info.setText(f"Trang {self.current_page} / {self.total_pages}")
+        self.ui.txt_page.setText(str(self.current_page))
+        self.ui.lbl_total_page.setText(f" / {self.total_pages}")
         # Ẩn/Hiện nút bấm
         self.ui.btn_prev.setEnabled(self.current_page > 1)
         self.ui.btn_next.setEnabled(self.current_page < self.total_pages)
@@ -145,6 +155,18 @@ class MainWindow(QMainWindow):
         if self.current_page < self.total_pages:
             self.current_page += 1
             self.load_data_to_table(self.list_search)
+    def show_page(self):
+        try :
+            input_txt = int(self.ui.txt_page.text().strip())
+            if 1 <= input_txt <= self.total_pages:
+                self.current_page = input_txt
+                self.load_data_to_table(self.list_search)
+            else : # Nếu số trang không hợp lệ
+                self.ui.txt_page.setText(str(self.current_page))
+                QMessageBox.warning(self, "Lỗi", f"Số trang phải từ 1 đến {self.total_pages}")
+        except ValueError:
+            self.ui.lbl_total_page.setText(str(self.current_page))
+            QMessageBox.warning(self, "Lỗi", "Vui lòng nhập số trang hợp lệ")
 
     def get_data_dialog(self):
         ID = self.function_dialog.lineEdit_ID.text().strip()
@@ -167,7 +189,7 @@ class MainWindow(QMainWindow):
                     QMessageBox.information(self, "Thông báo" , message)
                     # Nếu đang không tìm kiếm thì reset về trang cuối để thấy SV mới
                     if self.list_search is None:
-                        self.current_page = self.total_pages
+                        self.current_page = math.ceil(len(self.database.list_students) / self.limit)
                     self.load_data_to_table()
                     dialog_window.accept()
                 else:

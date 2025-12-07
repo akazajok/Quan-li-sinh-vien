@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="icons">
+    <file>icons/next.png</file>
+    <file>icons/prev.png</file>
     <file>icons/delete.png</file>
     <file>icons/edit.png</file>
     <file>icons/admin-panel.png</file>
