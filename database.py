@@ -83,6 +83,7 @@ class CsvData:
                 self.update_data_Csv()
                 return True, "Thay đổi thôn tin sinh viên thành công"
         return False, "Không tìm thấy sinh viên"
+
     def delete_student(self, student):
         for s in self.list_students:
             if s.ID == student.ID:

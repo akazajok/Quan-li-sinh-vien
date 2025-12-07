@@ -23,6 +23,10 @@ if os.name == 'nt':
 try:
     from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox
     from PyQt5.QtCore import QDate, Qt
+    from PyQt5.QtWidgets import QVBoxLayout  # Cần thêm cái này để bố trí biểu đồ
+    # --- Import thư viện vẽ biểu đồ ---
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    import matplotlib.pyplot as plt
 except ImportError as e:
     print(f"LỖI NGHIÊM TRỌNG: Không tìm thấy thư viện PyQt5. Hãy chạy 'pip install PyQt5'. Chi tiết: {e}")
     sys.exit(1)
@@ -39,6 +43,15 @@ except ImportError as e:
     print(f"LỖI IMPORT FILE DỰ ÁN: {e}")
     print("Gợi ý: Kiểm tra xem đã chạy lệnh 'pyrcc5' chưa hoặc file database.py có lỗi không.")
     sys.exit(1)
+
+# Class dùng để tạo khung vẽ biểu đồ
+class ChartCanvas(FigureCanvas):
+    def __init__(self, parent=None):
+        # Tạo đối tượng Figure của Matplotlib
+        # figsize=(width, height), dpi=độ phân giải
+        self.fig, self.ax = plt.subplots(figsize=(5, 4), dpi=100)
+        super().__init__(self.fig)
+        self.setParent(parent)
 
 class IDWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
@@ -93,6 +106,7 @@ class MainWindow(QMainWindow):
         self.ui.txt_page.returnPressed.connect(self.show_page)
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
+        self.update_dashboard()
         # Thêm dữ liệu sinh viên
         self.ui.btn_add_student.clicked.connect(self.add_student_from_table)
         # Tìm kiếm sinh viên
@@ -151,10 +165,12 @@ class MainWindow(QMainWindow):
         if self.current_page > 1:
             self.current_page -= 1
             self.load_data_to_table(self.list_search)
+
     def next_page(self):
         if self.current_page < self.total_pages:
             self.current_page += 1
             self.load_data_to_table(self.list_search)
+
     def show_page(self):
         try :
             input_txt = int(self.ui.txt_page.text().strip())
@@ -191,6 +207,7 @@ class MainWindow(QMainWindow):
                     if self.list_search is None:
                         self.current_page = math.ceil(len(self.database.list_students) / self.limit)
                     self.load_data_to_table()
+                    self.update_dashboard()
                     dialog_window.accept()
                 else:
                     QMessageBox.critical(dialog_window, "Lỗi" , message)
@@ -236,6 +253,7 @@ class MainWindow(QMainWindow):
                 if succes :
                     QMessageBox.information(self, "Thông báo" , message)
                     self.load_data_to_table()
+                    self.update_dashboard()
                     dialog_window.accept()
                 else:
                     QMessageBox.critical(self, "Lỗi" , message)
@@ -270,6 +288,7 @@ class MainWindow(QMainWindow):
             if success:
                 QMessageBox.information(self, "Thành công", message)
                 self.load_data_to_table()
+                self.update_dashboard()
             else :
                 QMessageBox.warning(self, "Lỗi", message)
 
@@ -285,6 +304,89 @@ class MainWindow(QMainWindow):
                     self.list_search.append(student)
         self.current_page = 1
         self.load_data_to_table(self.list_search)
+
+    def update_dashboard(self):
+        # Lấy danh sách sinh viên trực tiếp từ database.py
+        students = self.database.list_students
+        # 1. Tổng số sinh viên
+        total_sv = len(students)
+        # 2. Điểm trung bình (GPA)
+        if total_sv > 0:
+            # s.GPA đã được convert sang float trong class Student
+            avg_gpa = sum(s.GPA for s in students) / total_sv
+            # 3. Tổng số lớp (Dùng set để lọc các lớp trùng nhau)
+            total_classes = len(set(s.Class for s in students))
+            # 4. Sinh viên cảnh báo (GPA < 2.0)
+            warning_count = sum(1 for s in students if s.GPA < 2.0)
+            # --- Hiển thị lên giao diện ---
+            try:
+                self.ui.lbl_total_students.setText(str(total_sv))
+                self.ui.lbl_avg_gpa.setText(f"{avg_gpa:.2f}")
+                self.ui.lbl_total_classes.setText(str(total_classes))
+                self.ui.lbl_warning_students.setText(str(warning_count))
+                # Đổi màu đỏ nếu có cảnh báo
+                if warning_count > 0:
+                    self.ui.lbl_warning_students.setStyleSheet("color: red; font-weight: bold;")
+                else:
+                    self.ui.lbl_warning_students.setStyleSheet("color: green;")
+            except AttributeError:
+                pass  # Bỏ qua nếu chưa thiết kế xong giao diện các label này
+            # Vẽ biểu đồ
+            self.draw_charts(students)
+
+    def draw_charts(self, students):
+        # --- 1. Chuẩn bị dữ liệu ---
+        gender_counts = {"Nam": 0, "Nữ": 0}
+        gpa_counts = {"Yếu": 0, "TB": 0, "Khá": 0, "Giỏi": 0, "Xuất sắc": 0}
+        for s in students:
+            gender = s.Gender.strip()
+            if gender in gender_counts:
+                gender_counts[gender] += 1
+            # Phân loại GPA
+            gpa = s.GPA
+            if gpa < 2.0: gpa_counts["Yếu"] += 1
+            elif 2.0 <= gpa < 2.5: gpa_counts["TB"] += 1
+            elif 2.5 <= gpa < 3.2: gpa_counts["Khá"] += 1
+            elif 3.2 <= gpa < 3.6: gpa_counts["Giỏi"] += 1
+            else: gpa_counts["Xuất sắc"] += 1
+        # --- 2. Vẽ Biểu đồ tròn (Giới tính) ---
+        # Xóa biểu đồ cũ để vẽ lại
+        if hasattr(self, 'canvas_gender'):
+            self.ui.verticalLayout_gender.removeWidget(self.canvas_gender)
+            self.canvas_gender.deleteLater()
+
+        self.canvas_gender = ChartCanvas(self)
+        # Lọc bỏ các mục có giá trị 0 để biểu đồ đẹp hơn
+        labels = [k for k, v in gender_counts.items() if v > 0]
+        sizes = [v for v in gender_counts.values() if v > 0]
+        colors = ['#66b3ff', '#ff9999']  # Xanh, Hồng
+        if sizes:
+            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+            self.canvas_gender.ax.axis('equal')
+            self.canvas_gender.ax.set_title("Tỷ lệ Giới tính")
+        else:
+            self.canvas_gender.ax.text(0.5, 0.5, "Chưa có dữ liệu", ha='center')
+        # Thêm vào Widget trên UI (Cần đảm bảo widget_chart_gender đã có layout)
+        if self.ui.widget_chart_gender.layout() is None:
+            self.ui.verticalLayout_gender = QVBoxLayout(self.ui.widget_chart_gender)
+        self.ui.verticalLayout_gender.addWidget(self.canvas_gender)
+
+        # --- 3. Vẽ Biểu đồ cột (GPA) ---
+        if hasattr(self, 'canvas_gpa'):
+            self.ui.verticalLayout_gpa.removeWidget(self.canvas_gpa)
+            self.canvas_gpa.deleteLater()
+
+        self.canvas_gpa = ChartCanvas(self)
+        categories = list(gpa_counts.keys())
+        values = list(gpa_counts.values())
+        bars = self.canvas_gpa.ax.bar(categories, values, color='#4CAF50', width=0.5)
+        self.canvas_gpa.ax.set_title("Phân bố điểm GPA")
+        self.canvas_gpa.ax.set_ylabel("Số lượng")
+        self.canvas_gpa.ax.bar_label(bars)
+
+        if self.ui.widget_chart_gpa.layout() is None:
+            self.ui.verticalLayout_gpa = QVBoxLayout(self.ui.widget_chart_gpa)
+        self.ui.verticalLayout_gpa.addWidget(self.canvas_gpa)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
