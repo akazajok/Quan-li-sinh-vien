@@ -23,7 +23,7 @@ class Ui_MainWindow(object):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
-        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, -30, 545, 422))
+        self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 545, 422))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
@@ -205,6 +205,7 @@ class Ui_MainWindow(object):
         self.studentsTableWidget.setHorizontalHeaderItem(5, item)
         item = QtWidgets.QTableWidgetItem()
         self.studentsTableWidget.setHorizontalHeaderItem(6, item)
+        self.studentsTableWidget.horizontalHeader().setStretchLastSection(True)
         self.studentsTableWidget.verticalHeader().setVisible(False)
         self.verticalLayout_9.addWidget(self.studentsTableWidget)
         self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
@@ -356,7 +357,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
 
         self.retranslateUi(MainWindow)
-        self.stackedWidget.setCurrentIndex(2)
+        self.stackedWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):

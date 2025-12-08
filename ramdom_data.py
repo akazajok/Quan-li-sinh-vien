@@ -3,7 +3,7 @@ import random
 from datetime import datetime, timedelta
 
 # --- CẤU HÌNH ---
-SO_LUONG_SINH_VIEN = 5000  # Số lượng sinh viên muốn tạo (Bạn có thể tăng lên 10000 nếu thích)
+SO_LUONG_SINH_VIEN = 8888  # Số lượng sinh viên muốn tạo (Bạn có thể tăng lên 10000 nếu thích)
 FILE_NAME = "database.csv"
 
 # --- DỮ LIỆU MẪU VIỆT NAM ---

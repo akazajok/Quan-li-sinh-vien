@@ -21,7 +21,7 @@ if os.name == 'nt':
 # ---------------------------------------------------------
 # --- KHỐI IMPORT QUAN TRỌNG ---
 try:
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QHeaderView
     from PyQt5 import QtCore
     from PyQt5.QtCore import QDate, Qt, QPropertyAnimation, QEasingCurve
     from PyQt5.QtWidgets import QVBoxLayout  # Cần thêm cái này để bố trí biểu đồ
@@ -49,7 +49,8 @@ except ImportError as e:
 class ChartCanvas(FigureCanvas):
     def __init__(self, parent=None):
         # Tạo đối tượng Figure của Matplotlib
-        # figsize=(width, height), dpi=độ phân giải
+        # figsize=(5, 4): Kích thước mặc định (ngang 5 inch, cao 4 inch)
+        # dpi=100: Độ phân giải (dots per inch)
         self.fig, self.ax = plt.subplots(figsize=(5, 4), dpi=100)
         super().__init__(self.fig)
         self.setParent(parent)
@@ -96,6 +97,8 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.function_dialog = Ui_Dialog()
         self.database = CsvData()
+        # Lệnh này ép bảng chia đều chiều rộng cho 7 cột
+        self.ui.studentsTableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
         self.list_search = None # tạo danh sách cần tìm kiếm
 
@@ -385,8 +388,19 @@ class MainWindow(QMainWindow):
         labels = [k for k, v in gender_counts.items() if v > 0]
         sizes = [v for v in gender_counts.values() if v > 0]
         colors = ['#66b3ff', '#ff9999']  # Xanh, Hồng
+        # Hàm hiển thị: Số lượng + (Phần trăm)
+        # pct là phần trăm tự động tính, allvals là tổng số
+        def func_pct(pct, allvals):
+            absolute = int(round(pct / 100. * sum(allvals)))
+            return f"{absolute}\n({pct:.1f}%)"
+            #return f"{absolute}" #chỉ nhận số lượng &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&7
         if sizes:
-            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+            # Vẽ biểu đồ tròn
+            # autopct='%1.1f%%': Hiển thị số phần trăm trên biểu đồ (ví dụ: 50.5%).
+            # startangle=90: Xoay biểu đồ bắt đầu từ góc 12 giờ (thay vì 3 giờ mặc định).
+            # Nếu chỉ cần % autopct='%1.1f%%' ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&&&&&&&&&&&&&&&&&&&&
+            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors, autopct=lambda pct: func_pct(pct, sizes), startangle=90)
+            # axis('equal') giúp biểu đồ tròn vo, không bị méo thành hình bầu dục
             self.canvas_gender.ax.axis('equal')
             self.canvas_gender.ax.set_title("Tỷ lệ Giới tính")
         else:
@@ -404,10 +418,35 @@ class MainWindow(QMainWindow):
         self.canvas_gpa = ChartCanvas(self)
         categories = list(gpa_counts.keys())
         values = list(gpa_counts.values())
+        # Vẽ biểu đồ cột
+        # color='#4CAF50': Màu xanh lá cây
+        # width=0.5: Độ rộng của cột
         bars = self.canvas_gpa.ax.bar(categories, values, color='#4CAF50', width=0.5)
+        # Đặt tiêu đề và nhãn trục
         self.canvas_gpa.ax.set_title("Phân bố điểm GPA")
         self.canvas_gpa.ax.set_ylabel("Số lượng")
-        self.canvas_gpa.ax.bar_label(bars)
+        # --- FIX LỖI BỊ ĐÈ: Tăng giới hạn trần trục Y ---
+        if values:
+            max_val = max(values)
+            # Tăng trần lên 1.2 lần (thêm 20% khoảng trống phía trên)
+            self.canvas_gpa.ax.set_ylim(0, max_val * 1.25)
+        # --- TẠO NHÃN: SỐ LƯỢNG + % ---
+        total_sv = sum(values)
+        combined_labels = []
+        for v in values:
+            if total_sv > 0:
+                pct = (v / total_sv) * 100
+                # Format: Số lượng (xuống dòng) (Phần trăm)
+                combined_labels.append(f"{v}\n({pct:.1f}%)")
+                #combined_labels.append(f"{pct:.2f}%") #chỉ lấy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            else:
+                combined_labels.append(f"{v}\n(0%)")
+                #combined_labels.append("0%") # chỉ lấy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        # Hiển thị số lên biểu đồ
+        # Gắn nhãn với cỡ chữ nhỏ (fontsize=8)
+        #self.canvas_gpa.ax.bar_label(bars, labels=combined_labels)
+        self.canvas_gpa.ax.bar_label(bars) # chỉ lấy số ssssssssssssssssssssssssssssssssssssssssssssssssssssss
+        # Chỉ cần % :
 
         if self.ui.widget_chart_gpa.layout() is None:
             self.ui.verticalLayout_gpa = QVBoxLayout(self.ui.widget_chart_gpa)
