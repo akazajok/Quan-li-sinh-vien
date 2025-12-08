@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
         self.update_dashboard()
         # Thêm dữ liệu sinh viên
         self.ui.btn_add_student.clicked.connect(self.add_student_from_table)
-        # Tìm kiếm sinh viên
+        # Tìm kiếm sinh viên realtime
         self.ui.lineEdit_search_student.textChanged.connect(self.search_student)
         # Kết nối nút Menu với hàm xử lý
         self.ui.btn_menu.clicked.connect(self.toggle_menu)
@@ -166,7 +166,7 @@ class MainWindow(QMainWindow):
 
     def load_data_to_table(self, data_list=None):
         # Nếu không truyền dữ liệu vào (data_list là None) -> Lấy tất cả sinh viên
-        if data_list is None:
+        if data_list is None or data_list == "":
             list_students = self.database.list_students
         else : # Nếu có truyền vào (kết quả tìm kiếm) -> Chỉ hiển thị danh sách đó
             list_students = data_list
