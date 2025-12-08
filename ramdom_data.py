@@ -3,125 +3,117 @@ import random
 from datetime import datetime, timedelta
 
 # --- CẤU HÌNH ---
-SO_LUONG_SINH_VIEN = 8888  # Số lượng sinh viên muốn tạo (Bạn có thể tăng lên 10000 nếu thích)
+SO_LUONG_SINH_VIEN = 20000
 FILE_NAME = "database.csv"
 
-# --- DỮ LIỆU MẪU VIỆT NAM ---
+# --- DỮ LIỆU MẪU ---
 HO = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương",
-      "Lý"]
-LOT_NAM = ["Văn", "Hữu", "Đức", "Thành", "Công", "Minh", "Quốc", "Gia", "Xuân", "Ngọc", "Thanh", "Bảo", "Tuấn", "Hoàng"]
+      "Lý", "Vương", "Trịnh", "Đinh", "Lâm"]
+LOT_NAM = ["Văn", "Hữu", "Đức", "Thành", "Công", "Minh", "Quốc", "Gia", "Xuân", "Ngọc", "Thanh", "Bảo", "Tuấn", "Hoàng",
+           "Tiến", "Mạnh", "Quang", "Đăng"]
 LOT_NU = ["Thị", "Thu", "Phương", "Thanh", "Mỹ", "Ngọc", "Hồng", "Kim", "Khánh", "Diệu", "Thảo", "Bích", "Uyên",
-          "Hương"]
+          "Hương", "Lan", "Quỳnh", "Ánh"]
 TEN_NAM = ["Hùng", "Cường", "Dũng", "Nam", "Hải", "Hiếu", "Minh", "Tùng", "Sơn", "Phúc", "Vinh", "Quân", "Nghĩa",
-           "Long"]
-TEN_NU = ["Hoa", "Lan", "Hương", "Trang", "Mai", "Ly", "Hà", "Linh", "Huyền", "Tâm", "Thư", "Anh", "Nga", "Châu", "Vân"]
+           "Long", "Bách", "Khánh", "An", "Bình", "Thắng", "Đạt"]
+TEN_NU = ["Hoa", "Lan", "Hương", "Trang", "Mai", "Ly", "Hà", "Linh", "Huyền", "Tâm", "Thư", "Anh", "Nga", "Châu", "Vân",
+          "Ngân", "Yến", "Thảo", "Nhi", "Trâm"]
 
-# Mã ngành và Lớp tương ứng
-# Cấu trúc: "Mã Prefix trong MSV": ("Mã Lớp", "Ngành")
 MA_NGANH = {
-    "DCCN": ("CNTT", "D24CNTT"),
-    "DCAT": ("ATTT", "D24ATTT"),
-    "DCVT": ("DTVT", "D24DTVT"),
-    "DCTM": ("TMDT", "D24TMDT"),
-    "DCMK": ("MKT", "D24MKT"),
-    "DCTN": ("AI", "D24AI"),
-    "DCKT": ("KT", "D24KT"),
-    "DCQK": ("QTKD", "D24QTKD"),
-    "DCLG": ("LOG", "D24LOG")
+    "DCCN": ("CNTT", "D24CNTT"), "DCAT": ("ATTT", "D24ATTT"), "DCVT": ("DTVT", "D24DTVT"),
+    "DCTM": ("TMDT", "D24TMDT"), "DCMK": ("MKT", "D24MKT"), "DCTN": ("AI", "D24AI"),
+    "DCKT": ("KT", "D24KT"), "DCQK": ("QTKD", "D24QTKD"), "DCLG": ("LOG", "D24LOG")
 }
+
+# Tỉ lệ Nam dao động ngẫu nhiên từ 65% đến 80% (cho phần còn lại sau khi trừ đi giới tính Khác)
+TI_LE_NAM = random.uniform(0.65, 0.80)
+TI_LE_GIOI = random.uniform(0.15, 0.25)
+TI_LE_KHAC = 0.03  # 3% cho giới tính Khác
 
 
 def tao_ten_va_gioi_tinh():
-    """Random tên và giới tính phù hợp"""
     ho = random.choice(HO)
-    if random.choice([True, False]):  # 50% là Nam
+
+    rand_val = random.random()
+
+    # 1. Xử lý giới tính KHÁC (3%)
+    if rand_val < TI_LE_KHAC:
+        gioi_tinh = "Khác"
+        # Tên của giới tính Khác có thể là Nam hoặc Nữ ngẫu nhiên
+        if random.random() < 0.5:
+            lot = random.choice(LOT_NAM)
+            ten = random.choice(TEN_NAM)
+        else:
+            lot = random.choice(LOT_NU)
+            ten = random.choice(TEN_NU)
+
+    # 2. Xử lý giới tính NAM
+    elif rand_val < (TI_LE_KHAC + TI_LE_NAM):
         gioi_tinh = "Nam"
         lot = random.choice(LOT_NAM)
         ten = random.choice(TEN_NAM)
-    else:  # 50% là Nữ
+
+    # 3. Còn lại là NỮ
+    else:
         gioi_tinh = "Nữ"
         lot = random.choice(LOT_NU)
         ten = random.choice(TEN_NU)
-    full_name = f"{ho} {lot} {ten}"
-    return full_name, gioi_tinh
+
+    return f"{ho} {lot} {ten}", gioi_tinh
 
 
 def tao_ngay_sinh():
-    """Random ngày sinh cho sinh viên năm nhất (khoảng 2006)"""
     start_date = datetime(2006, 1, 1)
     end_date = datetime(2006, 12, 31)
-    random_days = random.randint(0, (end_date - start_date).days)
-    birth_date = start_date + timedelta(days=random_days)
-    return birth_date.strftime("%d/%m/%Y")
+    days_between = (end_date - start_date).days
+    return (start_date + timedelta(days=random.randint(0, days_between))).strftime("%d/%m/%Y")
 
 
 def tao_gpa():
-    """
-    Tạo GPA theo yêu cầu:
-    - 10% cơ hội được >= 3.6 (Xuất sắc)
-    - 90% cơ hội từ 1.5 đến 3.59 (Trung bình - Khá - Giỏi)
-    """
-    if random.random() < 0.15:  # 15% tỉ lệ rơi vào đây
-        # Random từ 3.60 đến 4.00
-        gpa = random.uniform(3.6, 4.0)
-    else:
-        # Random từ 1.5 đến 3.59 (Điểm thực tế ít khi thấp hơn 1.5)
-        gpa = random.uniform(1.5, 3.59)
+    rand = random.random()
+    ti_le_xs = TI_LE_GIOI / 3
+    limit_gioi = 1.0 - ti_le_xs - TI_LE_GIOI
+    limit_kha = limit_gioi - 0.40
+    limit_tb = limit_kha - 0.25
 
-    return round(gpa, 2)  # Làm tròn 2 chữ số thập phân
+    if rand < limit_tb:
+        gpa = random.uniform(1.0, 1.99)
+    elif rand < limit_kha:
+        gpa = random.uniform(2.0, 2.49)
+    elif rand < limit_gioi:
+        gpa = random.uniform(2.5, 3.19)
+    elif rand < (1.0 - ti_le_xs):
+        gpa = random.uniform(3.2, 3.59)
+    else:
+        gpa = random.uniform(3.6, 4.0)
+    return round(gpa, 2)
 
 
 def main():
-    print(f"Đang tạo {SO_LUONG_SINH_VIEN} dữ liệu mẫu...")
+    print(f"--- ĐANG TẠO DỮ LIỆU ---")
+    print(f"   - Tỉ lệ 'Khác': {TI_LE_KHAC * 100}%")
 
     danh_sach_sv = []
-
-    # Tạo danh sách các key của ngành để random
     keys_nganh = list(MA_NGANH.keys())
-
-    # Biến đếm số thứ tự cho từng ngành để mã SV không trùng
-    # Ví dụ: {'DCCN': 1, 'DCAT': 1...}
     counter_nganh = {k: 1 for k in keys_nganh}
 
     for _ in range(SO_LUONG_SINH_VIEN):
-        # 1. Chọn ngành ngẫu nhiên
         key_ma = random.choice(keys_nganh)
         lop_prefix, lop_root = MA_NGANH[key_ma]
-
-        # 2. Tạo Mã Sinh Viên (Ví dụ: B24DCCN001)
         stt = counter_nganh[key_ma]
-        msv = f"B24{key_ma}{stt:03d}"  # :03d nghĩa là số 1 thành 001, 10 thành 010
+        msv = f"B24{key_ma}{stt:05d}"
         counter_nganh[key_ma] += 1
 
-        # 3. Tạo Tên, Giới tính, Ngày sinh
         ho_ten, gioi_tinh = tao_ten_va_gioi_tinh()
         ngay_sinh = tao_ngay_sinh()
-
-        # 4. Tạo Lớp (Chia thành nhiều lớp nhỏ 01, 02, 03 cho phong phú)
-        # Ví dụ: D24CNTT01, D24CNTT02...
-        so_lop = random.randint(1, 4)
-        lop = f"{lop_root}0{so_lop}"
-
-        # 5. Tạo GPA (Logic 10%)
+        so_lop = random.randint(1, 10)
+        lop = f"{lop_root}{so_lop:02d}"
         gpa = tao_gpa()
 
-        # Thêm vào danh sách
-        # Cấu trúc file csv của bạn: ID, Name, DoB, Gender, Class, GPA
         danh_sach_sv.append([msv, ho_ten, ngay_sinh, gioi_tinh, lop, gpa])
 
-    # --- GHI VÀO FILE CSV ---
-    try:
-        # Dùng mode 'w' để ghi đè (xóa dữ liệu cũ), nếu muốn ghi nối thêm thì dùng 'a'
-        # encoding='utf-8-sig' để Excel hiển thị đúng tiếng Việt
-        with open(FILE_NAME, mode='w', encoding='utf-8-sig', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerows(danh_sach_sv)
-
-        print(f"Thành công! Đã tạo file '{FILE_NAME}' với {SO_LUONG_SINH_VIEN} sinh viên.")
-        print("Bạn có thể chạy main.py để kiểm tra tốc độ.")
-
-    except Exception as e:
-        print(f"Có lỗi xảy ra khi ghi file: {e}")
+    with open(FILE_NAME, mode='w', encoding='utf-8-sig', newline='') as file:
+        csv.writer(file).writerows(danh_sach_sv)
+    print("✅ XONG!")
 
 
 if __name__ == "__main__":

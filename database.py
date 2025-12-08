@@ -140,7 +140,7 @@ class CsvData:
         # Pandas cần dữ liệu dạng này để tạo bảng
         data_export = []
         for s in self.list_students:
-            if gpa_start <= s.GPA <= gpa_end:
+            if gpa_start <= s.GPA < gpa_end:
                 data_export.append({
                     "Mã SV": s.ID,
                     "Họ và Tên": s.full_name,
@@ -151,6 +151,11 @@ class CsvData:
                 })
         # 2. Tạo DataFrame (bảng dữ liệu trong bộ nhớ)
         df = pd.DataFrame(data_export)
+        # --- THÊM ĐOẠN NÀY ĐỂ SẮP XẾP ---
+        # Sắp xếp giảm dần theo GPA (người giỏi nhất lên đầu)
+        # ascending=False nghĩa là Giảm dần. Nếu muốn Tăng dần thì để True.
+        if not df.empty:
+            df.sort_values(by='Điểm GPA', ascending=False, inplace=True)
 
         # 3. Xuất ra file Excel
         try:

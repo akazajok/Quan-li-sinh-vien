@@ -106,8 +106,17 @@ class MainWindow(QMainWindow):
 
         self.function_dialog = Ui_Dialog()
         self.database = CsvData()
+        # --- SỬA ĐỔI 1: Cấu hình bảng ---
+        # TẮT Sorting mặc định của Qt (QUAN TRỌNG)
+        self.ui.studentsTableWidget.setSortingEnabled(False)
+        # Bắt sự kiện khi click vào tiêu đề cột để gọi hàm sắp xếp thủ công
+        self.ui.studentsTableWidget.horizontalHeader().sectionClicked.connect(self.sort_by_column)
+        # Biến theo dõi trạng thái sắp xếp
+        self.is_sort_asc = True  # True = Tăng dần, False = Giảm dần
+        self.current_sort_col = -1  # Lưu cột vừa click
         # Lệnh này ép bảng chia đều chiều rộng cho 7 cột
         self.ui.studentsTableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+
         self.ui.studentsTableWidget.verticalHeader().setDefaultSectionSize(50)
         self.list_search = None # tạo danh sách cần tìm kiếm
 
@@ -180,7 +189,6 @@ class MainWindow(QMainWindow):
         # 3. Hiển thị lên bảng
         table = self.ui.studentsTableWidget
         # --- TỐI ƯU HÓA TỐC ĐỘ ---
-        table.setSortingEnabled(False)  # Tắt sắp xếp (quan trọng nhất)
         table.setRowCount(0)  # Xóa sạch bảng
         # -------------------------
 
@@ -196,7 +204,6 @@ class MainWindow(QMainWindow):
             #Thêm nút xóa, sửa
             TableHelper.add_button_to_tableWidget(self, self.ui.studentsTableWidget, row_index, 6,
                                                   student, self.edit_student_from_table, self.delete_student_from_table)
-        table.setSortingEnabled(True) # Bật lại sắp xếp để user bấm vào tiêu đề cột
         # Cập nhật thông tin số trang
         self.ui.txt_page.setText(str(self.current_page))
         self.ui.lbl_total_page.setText(f" / {self.total_pages}")
@@ -392,7 +399,7 @@ class MainWindow(QMainWindow):
 
     def draw_charts(self, students):
         # --- 1. Chuẩn bị dữ liệu ---
-        gender_counts = {"Nam": 0, "Nữ": 0}
+        gender_counts = {"Nam": 0, "Nữ": 0, "Khác": 0}
         gpa_counts = {"Yếu": 0, "TB": 0, "Khá": 0, "Giỏi": 0, "Xuất sắc": 0}
         for s in students:
             gender = s.Gender.strip()
@@ -415,7 +422,7 @@ class MainWindow(QMainWindow):
         # Lọc bỏ các mục có giá trị 0 để biểu đồ đẹp hơn
         labels = [k for k, v in gender_counts.items() if v > 0]
         sizes = [v for v in gender_counts.values() if v > 0]
-        colors = ['#66b3ff', '#ff9999']  # Xanh, Hồng
+        colors = ['#66b3ff', '#ff9999', '#ffcc99']  # Xanh, Hồng
         # Hàm hiển thị: Số lượng + (Phần trăm)
         # pct là phần trăm tự động tính, allvals là tổng số
         def func_pct(pct, allvals):
@@ -427,7 +434,11 @@ class MainWindow(QMainWindow):
             # autopct='%1.1f%%': Hiển thị số phần trăm trên biểu đồ (ví dụ: 50.5%).
             # startangle=90: Xoay biểu đồ bắt đầu từ góc 12 giờ (thay vì 3 giờ mặc định).
             # Nếu chỉ cần % autopct='%1.1f%%' ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&&&&&&&&&&&&&&&&&&&&
-            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors, autopct=lambda pct: func_pct(pct, sizes), startangle=90)
+            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors, autopct=lambda pct: func_pct(pct, sizes), startangle=90,
+                pctdistance=0.75,          # <--- THÊM: Đẩy số % ra xa tâm một chút (0.6 -> 0.75)
+                labeldistance=1.05,         # <--- THÊM: Đẩy nhãn "Nam/Nữ/Khác" ra xa viền
+                textprops={'fontsize': 9}  # <--- THÊM: Giảm cỡ chữ xuống 9 cho gọn)
+            )
             # axis('equal') giúp biểu đồ tròn vo, không bị méo thành hình bầu dục
             self.canvas_gender.ax.axis('equal')
             self.canvas_gender.ax.set_title("Tỷ lệ Giới tính")
@@ -600,6 +611,7 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(self, "Thành công", message)
             else:
                 QMessageBox.warning(self, "Lỗi", message)
+
     def export_data_gpa(self, gpa_start, gpa_end):
 
         # 1. Mở hộp thoại để người dùng chọn nơi lưu file và đặt tên file
@@ -620,6 +632,67 @@ class MainWindow(QMainWindow):
                 QMessageBox.information(self, "Thành công", message)
             else:
                 QMessageBox.warning(self, "Lỗi", message)
+
+    def sort_by_column(self, col_index):
+        """
+        Hàm sắp xếp dữ liệu gốc dựa trên cột được chọn
+        col_index: 0 (ID), 1 (Họ tên), 2 (Ngày sinh), 3 (Giới tính), 4 (Lớp), 5 (GPA)
+        """
+        # 1. Xác định danh sách đang dùng (Tìm kiếm hay Toàn bộ)
+        if self.list_search is not None:
+            target_list = self.list_search
+        else:
+            target_list = self.database.list_students
+
+        # 2. Xử lý logic đảo chiều (Click 2 lần vào 1 cột thì đảo chiều)
+        if self.current_sort_col == col_index:
+            self.is_sort_asc = not self.is_sort_asc
+        else:
+            self.is_sort_asc = True  # Mặc định cột mới là tăng dần
+            self.current_sort_col = col_index
+        # 3. Định nghĩa quy tắc sắp xếp (Key) cho từng cột
+        key_func = None
+        try:
+            if col_index == 0:  # Cột Mã SV (Sắp xếp tự nhiên: B1 < B2 < B10)
+                # Dùng lại logic regex mà bạn đã viết trong IDWidgetItem
+                key_func = lambda s: [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', s.ID)]
+
+            elif col_index == 1:  # Cột Họ tên
+                # Mẹo: Sắp xếp theo TÊN (từ cuối cùng) thay vì HỌ
+                key_func = lambda s: s.full_name.strip().split()[-1].lower()
+
+            elif col_index == 2:  # Cột Ngày sinh
+                # Chuyển chuỗi 'dd/mm/yyyy' sang datetime để so sánh đúng
+                key_func = lambda s: datetime.strptime(s.DateOfBirth, '%d/%m/%Y')
+
+            elif col_index == 3:  # Giới tính
+                key_func = lambda s: s.Gender.lower()
+
+            elif col_index == 4:  # Lớp
+                key_func = lambda s: s.Class.lower()
+
+            elif col_index == 5:  # GPA
+                key_func = lambda s: s.GPA
+            # 4. Tiến hành sắp xếp danh sách gốc
+            if key_func:
+                target_list.sort(key=key_func, reverse=not self.is_sort_asc)
+
+                # 5. Reset về trang 1 và load lại bảng
+                self.current_page = 1
+
+                # Lưu ý: Cần truyền target_list vào hàm load để nó hiển thị đúng list vừa sắp xếp
+                # Nếu đang search thì truyền list_search, nếu không thì để None (để hàm tự lấy list_students)
+                if self.list_search is not None:
+                    self.load_data_to_table(self.list_search)
+                else:
+                    self.load_data_to_table(None)
+
+        except Exception as e:
+            print(f"Lỗi khi sắp xếp cột {col_index}: {e}")
+            # Fallback: Nếu lỗi (ví dụ ngày tháng sai format), sắp xếp theo string thường
+            target_list.sort(key=lambda s: str(getattr(s, 'ID', '')), reverse=not self.is_sort_asc)
+            self.load_data_to_table(target_list if self.list_search else None)
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
