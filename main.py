@@ -346,22 +346,15 @@ class MainWindow(QMainWindow):
         # Từ khóa muốn tìm kiếm
         keyword = self.ui.lineEdit_search_student.text().strip()
         if not keyword:
-            keyword = None
-        else :
-            self.list_search = []
+            # SỬA LỖI: Khi không có từ khóa, phải reset list_search về None
+            self.list_search = None
+        else:
+            # Nếu có từ khóa, gọi database để tìm và gán vào list_search
             self.list_search = self.database.search_students(keyword)
+        # Luôn reset về trang 1 khi thay đổi trạng thái tìm kiếm
         self.current_page = 1
+        # Load lại bảng với danh sách hiện tại (None hoặc List tìm được)
         self.load_data_to_table(self.list_search)
-
-        #if keyword == "" :
-            #self.list_search = None
-        #else :
-         #   self.list_search = [] # Tất cả student có liên quan
-          #  for student in self.database.list_students:
-           #     if keyword in student.ID.lower() or keyword in student.full_name.lower() or keyword in student.Class.lower():
-            #        self.list_search.append(student)
-        #self.current_page = 1
-        #self.load_data_to_table(self.list_search)
 
     def update_dashboard(self):
         # Lấy danh sách sinh viên trực tiếp từ database.py
