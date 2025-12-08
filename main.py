@@ -38,7 +38,7 @@ try:
     import resources_rc
     from Student_management import Ui_MainWindow
     from function_dialog import Ui_Dialog
-    from config_ui import TableHelper
+    from config_ui import TableHelper, HomeUiSetup, get_app_stylesheet
     from database import CsvData, Student
 except ImportError as e:
     print(f"LỖI IMPORT FILE DỰ ÁN: {e}")
@@ -95,11 +95,16 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        # --- THÊM MỚI: Cài đặt giao diện đẹp (QSS) ---
+        self.setStyleSheet(get_app_stylesheet())
+        # --- THÊM MỚI: Setup nội dung Trang chủ ---
+        HomeUiSetup.setup_home_ui(self.ui)
+
         self.function_dialog = Ui_Dialog()
         self.database = CsvData()
         # Lệnh này ép bảng chia đều chiều rộng cho 7 cột
         self.ui.studentsTableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
+        self.ui.studentsTableWidget.verticalHeader().setDefaultSectionSize(50)
         self.list_search = None # tạo danh sách cần tìm kiếm
 
         self.current_page = 1  # Trang hiện tại
@@ -348,6 +353,11 @@ class MainWindow(QMainWindow):
             warning_count = sum(1 for s in students if s.GPA < 2.0)
             # --- Hiển thị lên giao diện ---
             try:
+                self.ui.label.setText("Tổng sinh viên")
+                self.ui.label_2.setText("Điểm TB chung")
+                self.ui.label_4.setText("Tổng số lớp")
+                self.ui.label_6.setText("Cảnh báo học vụ")
+
                 self.ui.lbl_total_students.setText(str(total_sv))
                 self.ui.lbl_avg_gpa.setText(f"{avg_gpa:.2f}")
                 self.ui.lbl_total_classes.setText(str(total_classes))
@@ -410,7 +420,7 @@ class MainWindow(QMainWindow):
             self.ui.verticalLayout_gender = QVBoxLayout(self.ui.widget_chart_gender)
         self.ui.verticalLayout_gender.addWidget(self.canvas_gender)
 
-        # --- 3. Vẽ Biểu đồ cột (GPA) ---
+        # --- 3. Vẽ Biểu đồ cột (GPA) ------------------------------------------------------------------------------
         if hasattr(self, 'canvas_gpa'):
             self.ui.verticalLayout_gpa.removeWidget(self.canvas_gpa)
             self.canvas_gpa.deleteLater()
