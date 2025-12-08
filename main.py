@@ -434,7 +434,9 @@ class MainWindow(QMainWindow):
             # autopct='%1.1f%%': Hiển thị số phần trăm trên biểu đồ (ví dụ: 50.5%).
             # startangle=90: Xoay biểu đồ bắt đầu từ góc 12 giờ (thay vì 3 giờ mặc định).
             # Nếu chỉ cần % autopct='%1.1f%%' ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&&&&&&&&&&&&&&&&&&&&
-            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors, autopct=lambda pct: func_pct(pct, sizes), startangle=90,
+            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors,
+                autopct=lambda pct: func_pct(pct, sizes),
+                #startangle=90,
                 pctdistance=0.75,          # <--- THÊM: Đẩy số % ra xa tâm một chút (0.6 -> 0.75)
                 labeldistance=1.05,         # <--- THÊM: Đẩy nhãn "Nam/Nữ/Khác" ra xa viền
                 textprops={'fontsize': 9}  # <--- THÊM: Giảm cỡ chữ xuống 9 cho gọn)
