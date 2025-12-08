@@ -25,7 +25,7 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>545</width>
+         <width>575</width>
          <height>422</height>
         </rect>
        </property>
@@ -227,7 +227,7 @@
         <item>
          <widget class="QStackedWidget" name="stackedWidget">
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <widget class="QWidget" name="HomePage">
            <layout class="QVBoxLayout" name="verticalLayout_5" stretch="1,4">
@@ -261,8 +261,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>311</width>
-                 <height>302</height>
+                 <width>98</width>
+                 <height>28</height>
                 </rect>
                </property>
               </widget>
@@ -347,6 +347,19 @@
                       <width>32</width>
                       <height>32</height>
                      </size>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_export">
+                    <property name="minimumSize">
+                     <size>
+                      <width>0</width>
+                      <height>40</height>
+                     </size>
+                    </property>
+                    <property name="text">
+                     <string>Excel</string>
                     </property>
                    </widget>
                   </item>
@@ -541,7 +554,7 @@
                  <x>0</x>
                  <y>0</y>
                  <width>644</width>
-                 <height>418</height>
+                 <height>449</height>
                 </rect>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_16">
@@ -666,6 +679,45 @@
                    </item>
                   </layout>
                  </widget>
+                </item>
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_9">
+                  <item>
+                   <widget class="QPushButton" name="btn_excel_SinhVienXuatSac">
+                    <property name="text">
+                     <string>Sinh viên Xuất sắc</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_excel_SinhVienGioi">
+                    <property name="text">
+                     <string>Sinh viên Giỏi</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_excel_SinhVienKha">
+                    <property name="text">
+                     <string>Sinh viên Khá</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_excel_SinhVienTrungBinh">
+                    <property name="text">
+                     <string>Sinh viên Trung Bình</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="btn_excel_SinhVienKem">
+                    <property name="text">
+                     <string>Sinh viên Kém</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
                 </item>
                 <item>
                  <widget class="QFrame" name="frame_charts">

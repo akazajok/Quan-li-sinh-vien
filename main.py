@@ -21,7 +21,7 @@ if os.name == 'nt':
 # ---------------------------------------------------------
 # --- KHỐI IMPORT QUAN TRỌNG ---
 try:
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QHeaderView
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QDialog, QMessageBox, QHeaderView, QFileDialog
     from PyQt5 import QtCore
     from PyQt5.QtCore import QDate, Qt, QPropertyAnimation, QEasingCurve
     from PyQt5.QtWidgets import QVBoxLayout  # Cần thêm cái này để bố trí biểu đồ
@@ -144,6 +144,12 @@ class MainWindow(QMainWindow):
         # Mặc định khi mở lên sẽ vào trang "Trang chủ"
         self.ui.stackedWidget.setCurrentWidget(self.ui.HomePage)
         # ---------------------------------------------------------
+        self.ui.btn_export.clicked.connect(lambda: self.export_data(0,4))
+        self.ui.btn_excel_SinhVienXuatSac.clicked.connect(lambda: self.export_data(3.6,4.01))
+        self.ui.btn_excel_SinhVienGioi.clicked.connect(lambda: self.export_data(3.2,3.6))
+        self.ui.btn_excel_SinhVienKha.clicked.connect(lambda: self.export_data(2.5,3.2))
+        self.ui.btn_excel_SinhVienTrungBinh.clicked.connect(lambda: self.export_data(2,2.5))
+        self.ui.btn_excel_SinhVienKem.clicked.connect(lambda: self.export_data(0,2))
 
     def load_data_to_table(self, data_list=None):
         # Nếu không truyền dữ liệu vào (data_list là None) -> Lấy tất cả sinh viên
@@ -557,6 +563,27 @@ class MainWindow(QMainWindow):
 
         # Cập nhật giới hạn chiều rộng để giữ cố định sau khi animation xong
         self.ui.sidebar.setMaximumWidth(new_width)
+
+    def export_data(self, gpa_start, gpa_end):
+        # 1. Mở hộp thoại để người dùng chọn nơi lưu file và đặt tên file
+        options = QFileDialog.Options()
+        # Mặc định filter là file Excel (*.xlsx)
+        file_path, _ = QFileDialog.getSaveFileName(self, "Lưu file Excel", "", "Excel Files (*.xlsx);;All Files (*)",
+                                                   options=options)
+
+        if file_path:
+            # Nếu người dùng quên gõ đuôi .xlsx, mình tự thêm vào
+            if not file_path.endswith('.xlsx'):
+                file_path += '.xlsx'
+
+            # 2. Gọi hàm logic bên database để thực hiện
+            success, message = self.database.export_to_excel(file_path, gpa_start, gpa_end)
+
+            # 3. Thông báo kết quả
+            if success:
+                QMessageBox.information(self, "Thành công", message)
+            else:
+                QMessageBox.warning(self, "Lỗi", message)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

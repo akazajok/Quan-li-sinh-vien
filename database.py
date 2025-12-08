@@ -1,7 +1,13 @@
 import csv
+import pandas as pd
 
 class Student:
     def __init__(self, ID, full_name, DateOfBirth, Gender, Class, GPA):
+        # Xóa khoảng trắng ở đầu/cuối và ở giữa
+        # Ví dụ: "  B24  CNTT " -> "B24CNTT"
+        #clean_text = raw_id.strip().replace(" ", "")
+        # chỉ dữ lại chữ cái (a-z, A-Z) và số (0-9)
+        #clean_text = re.sub(r'[^a-zA-Z0-9]', '', clean_text)
         self.ID = ID
         self.full_name = full_name
         self.DateOfBirth = DateOfBirth
@@ -91,3 +97,31 @@ class CsvData:
                 self.update_data_Csv()
                 return True, "Xóa sinh viên thành công"
         return False, "Không tìm thấy sinh viên này trong hệ thống!"
+
+    def export_to_excel(self, filename, gpa_start, gpa_end):
+        if not self.list_students:
+            return False, "Danh sách sinh viên trống, không có gì để xuất!"
+
+        # 1. Chuyển đổi danh sách đối tượng Student thành danh sách Dictionary
+        # Pandas cần dữ liệu dạng này để tạo bảng
+        data_export = []
+        for s in self.list_students:
+            if gpa_start <= s.GPA <= gpa_end:
+                data_export.append({
+                    "Mã SV": s.ID,
+                    "Họ và Tên": s.full_name,
+                    "Ngày sinh": s.DateOfBirth,
+                    "Giới tính": s.Gender,
+                    "Lớp": s.Class,
+                    "Điểm GPA": s.GPA
+                })
+        # 2. Tạo DataFrame (bảng dữ liệu trong bộ nhớ)
+        df = pd.DataFrame(data_export)
+
+        # 3. Xuất ra file Excel
+        try:
+            # index=False để không in cột số thứ tự (0,1,2...) của pandas vào file
+            df.to_excel(filename, index=False)
+            return True, "Xuất file Excel thành công!"
+        except Exception as e:
+            return False, f"Lỗi khi ghi file: {e}"
