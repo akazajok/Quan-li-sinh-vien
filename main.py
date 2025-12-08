@@ -463,43 +463,91 @@ class MainWindow(QMainWindow):
         self.ui.verticalLayout_gpa.addWidget(self.canvas_gpa)
 
     def toggle_menu(self):
-        # Lấy độ rộng hiện tại
+        # Lấy chiều rộng hiện tại của sidebar
         width = self.ui.sidebar.width()
 
-        # --- ĐIỀU CHỈNH ĐỘ RỘNG Ở ĐÂY ---
-        collapsed_width = 100  # Độ rộng khi thu nhỏ (Tăng từ 70 -> 100)
+        # --- CẤU HÌNH ĐỘ RỘNG (Nên thống nhất với __init__) ---
+        collapsed_width = 100  # Độ rộng khi thu nhỏ (chuẩn để hiện icon)
         expanded_width = 250  # Độ rộng khi mở to
 
-        if width == collapsed_width:
+        # --- ĐỊNH NGHĨA STYLE (CSS) CHO 2 TRẠNG THÁI ---
+
+        # 1. Style khi MỞ RỘNG: Căn trái, Padding 20px để chữ không đè lên Icon
+        style_expanded = """
+            QPushButton {
+                text-align: left;
+                padding-left: 20px;
+                border: none;
+                background-color: transparent;
+                color: black;
+            }
+            QPushButton:hover {
+                background-color: #d0d0d0; /* Màu nền khi di chuột */
+            }
+        """
+
+        # 2. Style khi THU NHỎ: Căn giữa, Padding 0px để Icon nằm chính giữa
+        style_collapsed = """
+            QPushButton {
+                text-align: center;
+                padding-left: 0px;
+                padding-right: 0px;
+                border: none;
+                background-color: transparent;
+                color: black;
+            }
+            QPushButton:hover {
+                background-color: #d0d0d0;
+            }
+        """
+
+        # --- XỬ LÝ LOGIC ĐÓNG/MỞ ---
+        # Nếu chiều rộng nhỏ hơn mức mở rộng -> Tức là đang thu nhỏ -> Cần mở ra
+        if width < expanded_width:
             new_width = expanded_width
-            # Hiện lại chữ
+
+            # Hiện lại chữ cho các nút
+            self.ui.btn_Dashboard.setText("  Trang chủ")
+            self.ui.btn_sinh_vien.setText("  Sinh Viên")
+            self.ui.btn_dashboard.setText("  Thống kê")
+            self.ui.btn_menu.setText("  MENU")
+
+            # Hiện lại các Logo và Text tiêu đề
             self.ui.appTitle.setVisible(True)
             self.ui.appSubitle.setVisible(True)
             self.ui.profileName.setVisible(True)
             self.ui.profileEmail.setVisible(True)
             self.ui.LogoPtit.setVisible(True)
 
-            # Khôi phục chữ cho các nút
-            self.ui.btn_Dashboard.setText("  Trang chủ")
-            self.ui.btn_sinh_vien.setText("  Sinh Viên")
-            self.ui.btn_dashboard.setText("  Thống kê")
-            self.ui.btn_menu.setText("  MENU")
-        else:
+            # --- ÁP DỤNG STYLE MỞ RỘNG ---
+            self.ui.btn_Dashboard.setStyleSheet(style_expanded)
+            self.ui.btn_sinh_vien.setStyleSheet(style_expanded)
+            self.ui.btn_dashboard.setStyleSheet(style_expanded)
+            self.ui.btn_menu.setStyleSheet(style_expanded)
+
+        else:  # Đang mở rộng -> Cần thu nhỏ lại
             new_width = collapsed_width
-            # Ẩn chữ
+
+            # Xóa chữ, chỉ để lại Icon
+            self.ui.btn_Dashboard.setText("")
+            self.ui.btn_sinh_vien.setText("")
+            self.ui.btn_dashboard.setText("")
+            self.ui.btn_menu.setText("")
+
+            # Ẩn các Logo và Text tiêu đề
             self.ui.appTitle.setVisible(False)
             self.ui.appSubitle.setVisible(False)
             self.ui.profileName.setVisible(False)
             self.ui.profileEmail.setVisible(False)
             self.ui.LogoPtit.setVisible(False)
 
-            # Xóa chữ trên các nút, chỉ để lại Icon
-            self.ui.btn_Dashboard.setText("")
-            self.ui.btn_sinh_vien.setText("")
-            self.ui.btn_dashboard.setText("")
-            self.ui.btn_menu.setText("")
+            # --- ÁP DỤNG STYLE THU NHỎ (Quan trọng nhất để sửa lỗi) ---
+            self.ui.btn_Dashboard.setStyleSheet(style_collapsed)
+            self.ui.btn_sinh_vien.setStyleSheet(style_collapsed)
+            self.ui.btn_dashboard.setStyleSheet(style_collapsed)
+            self.ui.btn_menu.setStyleSheet(style_collapsed)
 
-        # Chạy Animation
+        # --- CHẠY HIỆU ỨNG ANIMATION ---
         self.animation = QPropertyAnimation(self.ui.sidebar, b"minimumWidth")
         self.animation.setDuration(300)
         self.animation.setStartValue(width)
@@ -507,7 +555,7 @@ class MainWindow(QMainWindow):
         self.animation.setEasingCurve(QEasingCurve.InOutQuart)
         self.animation.start()
 
-        # Cập nhật maximumWidth để giữ cố định kích thước mới
+        # Cập nhật giới hạn chiều rộng để giữ cố định sau khi animation xong
         self.ui.sidebar.setMaximumWidth(new_width)
 
 if __name__ == "__main__":
