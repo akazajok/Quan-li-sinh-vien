@@ -84,7 +84,7 @@ class HomeUiSetup:
                 ("HỒ SƠ SINH VIÊN", "Quản lý thông tin, điểm số", ":/icons/icons/student.png", 0, 0),
                 ("THỐNG KÊ BÁO CÁO", "Biểu đồ trực quan dữ liệu", ":/icons/icons/dashboard.png", 0, 1),
                 ("QUẢN TRỊ HỆ THỐNG", "Bảo mật và phân quyền", ":/icons/icons/admin-panel.png", 1, 0),
-                ("THÔNG TIN DỰ ÁN", "Nhóm 1 - Lớp CNTT 2025", ":/icons/icons/Logo_PTIT_University.png", 1, 1)
+                ("THÔNG TIN SINH VIÊN", "MSV: B25DCTN065 - Lớp 02-TTNT 2025", ":/icons/icons/Logo_PTIT_University.png", 1, 1)
             ]
 
             for title, sub, icon, r, c in cards_data:

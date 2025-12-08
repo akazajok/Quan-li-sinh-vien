@@ -64,6 +64,10 @@ class IDWidgetItem(QTableWidgetItem):
                 if not text :
                     return []
                 # Hàm tách chuỗi thành các phần nhỏ: số ra số, chữ ra chữ
+                # re.split( ....(....)... ) dấu (...) để giữ lại phần bị cắt
+                # \d: Đại diện cho một chữ số (0-9).
+                # \D (viết tắt của non-Digit): Đại diện cho cái gì không phải là số (chữ cái, dấu chấm, khoảng trắng...).
+                # +: Có nghĩa là "liền tù tì" (một hoặc nhiều ký tự liên tiếp).
                 # Ví dụ: "D21CNTT02" -> ['D', 21, 'CNTT', 2]
                 return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', text)]
 
@@ -144,12 +148,12 @@ class MainWindow(QMainWindow):
         # Mặc định khi mở lên sẽ vào trang "Trang chủ"
         self.ui.stackedWidget.setCurrentWidget(self.ui.HomePage)
         # ---------------------------------------------------------
-        self.ui.btn_export.clicked.connect(lambda: self.export_data(0,4))
-        self.ui.btn_excel_SinhVienXuatSac.clicked.connect(lambda: self.export_data(3.6,4.01))
-        self.ui.btn_excel_SinhVienGioi.clicked.connect(lambda: self.export_data(3.2,3.6))
-        self.ui.btn_excel_SinhVienKha.clicked.connect(lambda: self.export_data(2.5,3.2))
-        self.ui.btn_excel_SinhVienTrungBinh.clicked.connect(lambda: self.export_data(2,2.5))
-        self.ui.btn_excel_SinhVienKem.clicked.connect(lambda: self.export_data(0,2))
+        self.ui.btn_export.clicked.connect(lambda: self.export_data(self.list_search))
+        self.ui.btn_excel_SinhVienXuatSac.clicked.connect(lambda: self.export_data_gpa(3.6,4.01))
+        self.ui.btn_excel_SinhVienGioi.clicked.connect(lambda: self.export_data_gpa(3.2,3.6))
+        self.ui.btn_excel_SinhVienKha.clicked.connect(lambda: self.export_data_gpa(2.5,3.2))
+        self.ui.btn_excel_SinhVienTrungBinh.clicked.connect(lambda: self.export_data_gpa(2,2.5))
+        self.ui.btn_excel_SinhVienKem.clicked.connect(lambda: self.export_data_gpa(0,2))
 
     def load_data_to_table(self, data_list=None):
         # Nếu không truyền dữ liệu vào (data_list là None) -> Lấy tất cả sinh viên
@@ -333,16 +337,24 @@ class MainWindow(QMainWindow):
 
     def search_student(self):
         # Từ khóa muốn tìm kiếm
-        keyword = self.ui.lineEdit_search_student.text().strip().lower()
-        if keyword == "" :
-            self.list_search = None
+        keyword = self.ui.lineEdit_search_student.text().strip()
+        if not keyword:
+            keyword = None
         else :
-            self.list_search = [] # Tất cả student có liên quan
-            for student in self.database.list_students:
-                if keyword in student.ID.lower() or keyword in student.full_name.lower() or keyword in student.Class.lower():
-                    self.list_search.append(student)
+            self.list_search = []
+            self.list_search = self.database.search_students(keyword)
         self.current_page = 1
         self.load_data_to_table(self.list_search)
+
+        #if keyword == "" :
+            #self.list_search = None
+        #else :
+         #   self.list_search = [] # Tất cả student có liên quan
+          #  for student in self.database.list_students:
+           #     if keyword in student.ID.lower() or keyword in student.full_name.lower() or keyword in student.Class.lower():
+            #        self.list_search.append(student)
+        #self.current_page = 1
+        #self.load_data_to_table(self.list_search)
 
     def update_dashboard(self):
         # Lấy danh sách sinh viên trực tiếp từ database.py
@@ -564,7 +576,12 @@ class MainWindow(QMainWindow):
         # Cập nhật giới hạn chiều rộng để giữ cố định sau khi animation xong
         self.ui.sidebar.setMaximumWidth(new_width)
 
-    def export_data(self, gpa_start, gpa_end):
+    def export_data(self, data_list = None ):
+        if data_list is None:
+            data_list = self.database.list_students
+        else : # Nếu có truyền vào (kết quả tìm kiếm) -> Chỉ hiển thị danh sách đó
+            data_list = data_list
+
         # 1. Mở hộp thoại để người dùng chọn nơi lưu file và đặt tên file
         options = QFileDialog.Options()
         # Mặc định filter là file Excel (*.xlsx)
@@ -577,14 +594,32 @@ class MainWindow(QMainWindow):
                 file_path += '.xlsx'
 
             # 2. Gọi hàm logic bên database để thực hiện
-            success, message = self.database.export_to_excel(file_path, gpa_start, gpa_end)
-
+            success, message = self.database.export_to_excel(file_path, data_list )
             # 3. Thông báo kết quả
             if success:
                 QMessageBox.information(self, "Thành công", message)
             else:
                 QMessageBox.warning(self, "Lỗi", message)
+    def export_data_gpa(self, gpa_start, gpa_end):
 
+        # 1. Mở hộp thoại để người dùng chọn nơi lưu file và đặt tên file
+        options = QFileDialog.Options()
+        # Mặc định filter là file Excel (*.xlsx)
+        file_path, _ = QFileDialog.getSaveFileName(self, "Lưu file Excel", "", "Excel Files (*.xlsx);;All Files (*)",
+                                                   options=options)
+
+        if file_path:
+            # Nếu người dùng quên gõ đuôi .xlsx, mình tự thêm vào
+            if not file_path.endswith('.xlsx'):
+                file_path += '.xlsx'
+
+            # 2. Gọi hàm logic bên database để thực hiện
+            success, message = self.database.export_to_excel_gpa(file_path, gpa_start, gpa_end )
+            # 3. Thông báo kết quả
+            if success:
+                QMessageBox.information(self, "Thành công", message)
+            else:
+                QMessageBox.warning(self, "Lỗi", message)
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
