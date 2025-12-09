@@ -99,14 +99,16 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        # --- THÊM MỚI: Cài đặt giao diện đẹp (QSS) ---
+        # --- THÊM MỚI: Cài đặt giao diện đẹp (QSS) ----------------------
         self.setStyleSheet(get_app_stylesheet())
-        # --- THÊM MỚI: Setup nội dung Trang chủ ---
+        # --- THÊM MỚI: Setup nội dung Trang chủ ---------------------
         HomeUiSetup.setup_home_ui(self.ui)
-
         self.function_dialog = Ui_Dialog()
         self.database = CsvData()
-        # --- SỬA ĐỔI 1: Cấu hình bảng ---
+
+        self.list_search = None  # tạo danh sách cần tìm kiếm
+
+        # --- SỬA ĐỔI 1: Cấu hình phần sort --------------------------------------------------------------------------
         # TẮT Sorting mặc định của Qt (QUAN TRỌNG)
         self.ui.studentsTableWidget.setSortingEnabled(False)
         # Bắt sự kiện khi click vào tiêu đề cột để gọi hàm sắp xếp thủ công
@@ -116,30 +118,36 @@ class MainWindow(QMainWindow):
         self.current_sort_col = -1  # Lưu cột vừa click
         # Lệnh này ép bảng chia đều chiều rộng cho 7 cột
         self.ui.studentsTableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-
         self.ui.studentsTableWidget.verticalHeader().setDefaultSectionSize(50)
-        self.list_search = None # tạo danh sách cần tìm kiếm
+        #-----------------------------------------------------------------------------------------------------------
 
+        # Cấu hình phần load data chia ra làm nhiều trang------------------------------------------------------------------------
         self.current_page = 1  # Trang hiện tại
         self.limit = 20  # Số dòng mỗi trang
         self.total_pages = 1  # Tổng số trang
         self.ui.btn_prev.clicked.connect(self.prev_page)
         self.ui.btn_next.clicked.connect(self.next_page)
         self.ui.txt_page.returnPressed.connect(self.show_page)
+        #----------------------------------------------------------------------------------------------------------
 
+        # Cấu hình giao diện khi sử dụng nút bấm MENU--------------------------------------------------------------
         # Định nghĩa chiều rộng của sidebar
         self.sidebar_expanded = True  # Mặc định là đang mở to
         # --- Cấu hình cho Sidebar Menu (QUAN TRỌNG: Cần khai báo biến này) ---
         self.width_standard = 250  # Độ rộng khi mở to (khớp với Qt Designer)
         self.width_collapsed = 60  # Độ rộng khi thu nhỏ
+        #-------------------------------------------------------------------------------------------------------------
+
         # Load dữ liệu ngay khi mở
         self.load_data_to_table()
         self.update_dashboard()
+
         # Thêm dữ liệu sinh viên
         self.ui.btn_add_student.clicked.connect(self.add_student_from_table)
         # Tìm kiếm sinh viên realtime
         self.ui.lineEdit_search_student.textChanged.connect(self.search_student)
-        # Kết nối nút Menu với hàm xử lý
+
+        # Kết nối nút Menu với hàm xử lý-----------------------------------------------------------
         self.ui.btn_menu.clicked.connect(self.toggle_menu)
         self.ui.sidebar.setMaximumWidth(250)
         self.ui.sidebar.setMinimumWidth(250)
@@ -148,6 +156,8 @@ class MainWindow(QMainWindow):
         self.ui.btn_Dashboard.setIconSize(new_icon_size)
         self.ui.btn_sinh_vien.setIconSize(new_icon_size)
         self.ui.btn_dashboard.setIconSize(new_icon_size)
+        #------------------------------------------------------------------------------------------
+
         # Nút Trang chủ -> Hiện màn hình HomePage
         self.ui.btn_Dashboard.clicked.connect(lambda: self.ui.stackedWidget.setCurrentWidget(self.ui.HomePage))
         # Nút Sinh viên -> Hiện màn hình quản lý sinh viên
@@ -157,6 +167,8 @@ class MainWindow(QMainWindow):
         # Mặc định khi mở lên sẽ vào trang "Trang chủ"
         self.ui.stackedWidget.setCurrentWidget(self.ui.HomePage)
         # ---------------------------------------------------------
+
+        # Excel xuất file dữ liệu--------------------------------------------------------------------------------
         self.ui.btn_export.clicked.connect(lambda: self.export_data(self.list_search))
         self.ui.btn_excel_SinhVienXuatSac.clicked.connect(lambda: self.export_data_gpa(3.6,4.01))
         self.ui.btn_excel_SinhVienGioi.clicked.connect(lambda: self.export_data_gpa(3.2,3.6))
@@ -210,6 +222,136 @@ class MainWindow(QMainWindow):
         # Ẩn/Hiện nút bấm
         self.ui.btn_prev.setEnabled(self.current_page > 1)
         self.ui.btn_next.setEnabled(self.current_page < self.total_pages)
+
+    def update_dashboard(self):
+        # Lấy danh sách sinh viên trực tiếp từ database.py
+        students = self.database.list_students
+        # 1. Tổng số sinh viên
+        total_sv = len(students)
+        # 2. Điểm trung bình (GPA)
+        if total_sv > 0:
+            # s.GPA đã được convert sang float trong class Student
+            avg_gpa = sum(s.GPA for s in students) / total_sv
+            # 3. Tổng số lớp (Dùng set để lọc các lớp trùng nhau)
+            total_classes = len(set(s.Class for s in students))
+            # 4. Sinh viên cảnh báo (GPA < 2.0)
+            warning_count = sum(1 for s in students if s.GPA < 2.0)
+            # --- Hiển thị lên giao diện ---
+            try:
+                self.ui.label.setText("Tổng sinh viên")
+                self.ui.label_2.setText("Điểm TB chung")
+                self.ui.label_4.setText("Tổng số lớp")
+                self.ui.label_6.setText("Cảnh báo học vụ")
+
+                self.ui.lbl_total_students.setText(str(total_sv))
+                self.ui.lbl_avg_gpa.setText(f"{avg_gpa:.2f}")
+                self.ui.lbl_total_classes.setText(str(total_classes))
+                self.ui.lbl_warning_students.setText(str(warning_count))
+                # Đổi màu đỏ nếu có cảnh báo
+                if warning_count > 0:
+                    self.ui.lbl_warning_students.setStyleSheet("color: red; font-weight: bold;")
+                else:
+                    self.ui.lbl_warning_students.setStyleSheet("color: green;")
+            except AttributeError:
+                pass  # Bỏ qua nếu chưa thiết kế xong giao diện các label này
+            # Vẽ biểu đồ
+            self.draw_charts(students)
+
+    def draw_charts(self, students):
+        # --- 1. Chuẩn bị dữ liệu ---
+        gender_counts = {"Nam": 0, "Nữ": 0, "Khác": 0}
+        gpa_counts = {"Yếu": 0, "TB": 0, "Khá": 0, "Giỏi": 0, "Xuất sắc": 0}
+        for s in students:
+            gender = s.Gender.strip()
+            if gender in gender_counts:
+                gender_counts[gender] += 1
+            # Phân loại GPA
+            gpa = s.GPA
+            if gpa < 2.0: gpa_counts["Yếu"] += 1
+            elif 2.0 <= gpa < 2.5: gpa_counts["TB"] += 1
+            elif 2.5 <= gpa < 3.2: gpa_counts["Khá"] += 1
+            elif 3.2 <= gpa < 3.6: gpa_counts["Giỏi"] += 1
+            else: gpa_counts["Xuất sắc"] += 1
+        # --- 2. Vẽ Biểu đồ tròn (Giới tính) ---
+        # Xóa biểu đồ cũ để vẽ lại
+        if hasattr(self, 'canvas_gender'):
+            self.ui.verticalLayout_gender.removeWidget(self.canvas_gender)
+            self.canvas_gender.deleteLater()
+
+        self.canvas_gender = ChartCanvas(self)
+        # Lọc bỏ các mục có giá trị 0 để biểu đồ đẹp hơn
+        labels = [k for k, v in gender_counts.items() if v > 0]
+        sizes = [v for v in gender_counts.values() if v > 0]
+        colors = ['#66b3ff', '#ff9999', '#ffcc99']  # Xanh, Hồng
+        # Hàm hiển thị: Số lượng + (Phần trăm)
+        # pct là phần trăm tự động tính, allvals là tổng số
+        def func_pct(pct, allvals):
+            absolute = int(round(pct / 100. * sum(allvals)))
+            return f"{absolute}\n({pct:.1f}%)"
+            #return f"{absolute}" #chỉ nhận số lượng &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&7
+        if sizes:
+            # Vẽ biểu đồ tròn
+            # autopct='%1.1f%%': Hiển thị số phần trăm trên biểu đồ (ví dụ: 50.5%).
+            # startangle=90: Xoay biểu đồ bắt đầu từ góc 12 giờ (thay vì 3 giờ mặc định).
+            # Nếu chỉ cần % autopct='%1.1f%%' ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&&&&&&&&&&&&&&&&&&&&
+            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors,
+                autopct=lambda pct: func_pct(pct, sizes),
+                #startangle=90,
+                pctdistance=0.75,          # <--- THÊM: Đẩy số % ra xa tâm một chút (0.6 -> 0.75)
+                labeldistance=1.05,         # <--- THÊM: Đẩy nhãn "Nam/Nữ/Khác" ra xa viền
+                textprops={'fontsize': 9}  # <--- THÊM: Giảm cỡ chữ xuống 9 cho gọn)
+            )
+            # axis('equal') giúp biểu đồ tròn vo, không bị méo thành hình bầu dục
+            self.canvas_gender.ax.axis('equal')
+            self.canvas_gender.ax.set_title("Tỷ lệ Giới tính")
+        else:
+            self.canvas_gender.ax.text(0.5, 0.5, "Chưa có dữ liệu", ha='center')
+        # Thêm vào Widget trên UI (Cần đảm bảo widget_chart_gender đã có layout)
+        if self.ui.widget_chart_gender.layout() is None:
+            self.ui.verticalLayout_gender = QVBoxLayout(self.ui.widget_chart_gender)
+        self.ui.verticalLayout_gender.addWidget(self.canvas_gender)
+
+        # --- 3. Vẽ Biểu đồ cột (GPA) ------------------------------------------------------------------------------
+        if hasattr(self, 'canvas_gpa'):
+            self.ui.verticalLayout_gpa.removeWidget(self.canvas_gpa)
+            self.canvas_gpa.deleteLater()
+
+        self.canvas_gpa = ChartCanvas(self)
+        categories = list(gpa_counts.keys())
+        values = list(gpa_counts.values())
+        # Vẽ biểu đồ cột
+        # color='#4CAF50': Màu xanh lá cây
+        # width=0.5: Độ rộng của cột
+        bars = self.canvas_gpa.ax.bar(categories, values, color='#4CAF50', width=0.5)
+        # Đặt tiêu đề và nhãn trục
+        self.canvas_gpa.ax.set_title("Phân bố điểm GPA")
+        self.canvas_gpa.ax.set_ylabel("Số lượng")
+        # --- FIX LỖI BỊ ĐÈ: Tăng giới hạn trần trục Y ---
+        if values:
+            max_val = max(values)
+            # Tăng trần lên 1.2 lần (thêm 20% khoảng trống phía trên)
+            self.canvas_gpa.ax.set_ylim(0, max_val * 1.25)
+        # --- TẠO NHÃN: SỐ LƯỢNG + % ---
+        total_sv = sum(values)
+        combined_labels = []
+        for v in values:
+            if total_sv > 0:
+                pct = (v / total_sv) * 100
+                # Format: Số lượng (xuống dòng) (Phần trăm)
+                combined_labels.append(f"{v}\n({pct:.1f}%)")
+                #combined_labels.append(f"{pct:.2f}%") #chỉ lấy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            else:
+                combined_labels.append(f"{v}\n(0%)")
+                #combined_labels.append("0%") # chỉ lấy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        # Hiển thị số lên biểu đồ
+        # Gắn nhãn với cỡ chữ nhỏ (fontsize=8)
+        #self.canvas_gpa.ax.bar_label(bars, labels=combined_labels)
+        self.canvas_gpa.ax.bar_label(bars) # chỉ lấy số ssssssssssssssssssssssssssssssssssssssssssssssssssssss
+        # Chỉ cần % :
+
+        if self.ui.widget_chart_gpa.layout() is None:
+            self.ui.verticalLayout_gpa = QVBoxLayout(self.ui.widget_chart_gpa)
+        self.ui.verticalLayout_gpa.addWidget(self.canvas_gpa)
 
     def prev_page(self):
         if self.current_page > 1:
@@ -355,136 +497,6 @@ class MainWindow(QMainWindow):
         self.current_page = 1
         # Load lại bảng với danh sách hiện tại (None hoặc List tìm được)
         self.load_data_to_table(self.list_search)
-
-    def update_dashboard(self):
-        # Lấy danh sách sinh viên trực tiếp từ database.py
-        students = self.database.list_students
-        # 1. Tổng số sinh viên
-        total_sv = len(students)
-        # 2. Điểm trung bình (GPA)
-        if total_sv > 0:
-            # s.GPA đã được convert sang float trong class Student
-            avg_gpa = sum(s.GPA for s in students) / total_sv
-            # 3. Tổng số lớp (Dùng set để lọc các lớp trùng nhau)
-            total_classes = len(set(s.Class for s in students))
-            # 4. Sinh viên cảnh báo (GPA < 2.0)
-            warning_count = sum(1 for s in students if s.GPA < 2.0)
-            # --- Hiển thị lên giao diện ---
-            try:
-                self.ui.label.setText("Tổng sinh viên")
-                self.ui.label_2.setText("Điểm TB chung")
-                self.ui.label_4.setText("Tổng số lớp")
-                self.ui.label_6.setText("Cảnh báo học vụ")
-
-                self.ui.lbl_total_students.setText(str(total_sv))
-                self.ui.lbl_avg_gpa.setText(f"{avg_gpa:.2f}")
-                self.ui.lbl_total_classes.setText(str(total_classes))
-                self.ui.lbl_warning_students.setText(str(warning_count))
-                # Đổi màu đỏ nếu có cảnh báo
-                if warning_count > 0:
-                    self.ui.lbl_warning_students.setStyleSheet("color: red; font-weight: bold;")
-                else:
-                    self.ui.lbl_warning_students.setStyleSheet("color: green;")
-            except AttributeError:
-                pass  # Bỏ qua nếu chưa thiết kế xong giao diện các label này
-            # Vẽ biểu đồ
-            self.draw_charts(students)
-
-    def draw_charts(self, students):
-        # --- 1. Chuẩn bị dữ liệu ---
-        gender_counts = {"Nam": 0, "Nữ": 0, "Khác": 0}
-        gpa_counts = {"Yếu": 0, "TB": 0, "Khá": 0, "Giỏi": 0, "Xuất sắc": 0}
-        for s in students:
-            gender = s.Gender.strip()
-            if gender in gender_counts:
-                gender_counts[gender] += 1
-            # Phân loại GPA
-            gpa = s.GPA
-            if gpa < 2.0: gpa_counts["Yếu"] += 1
-            elif 2.0 <= gpa < 2.5: gpa_counts["TB"] += 1
-            elif 2.5 <= gpa < 3.2: gpa_counts["Khá"] += 1
-            elif 3.2 <= gpa < 3.6: gpa_counts["Giỏi"] += 1
-            else: gpa_counts["Xuất sắc"] += 1
-        # --- 2. Vẽ Biểu đồ tròn (Giới tính) ---
-        # Xóa biểu đồ cũ để vẽ lại
-        if hasattr(self, 'canvas_gender'):
-            self.ui.verticalLayout_gender.removeWidget(self.canvas_gender)
-            self.canvas_gender.deleteLater()
-
-        self.canvas_gender = ChartCanvas(self)
-        # Lọc bỏ các mục có giá trị 0 để biểu đồ đẹp hơn
-        labels = [k for k, v in gender_counts.items() if v > 0]
-        sizes = [v for v in gender_counts.values() if v > 0]
-        colors = ['#66b3ff', '#ff9999', '#ffcc99']  # Xanh, Hồng
-        # Hàm hiển thị: Số lượng + (Phần trăm)
-        # pct là phần trăm tự động tính, allvals là tổng số
-        def func_pct(pct, allvals):
-            absolute = int(round(pct / 100. * sum(allvals)))
-            return f"{absolute}\n({pct:.1f}%)"
-            #return f"{absolute}" #chỉ nhận số lượng &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&7
-        if sizes:
-            # Vẽ biểu đồ tròn
-            # autopct='%1.1f%%': Hiển thị số phần trăm trên biểu đồ (ví dụ: 50.5%).
-            # startangle=90: Xoay biểu đồ bắt đầu từ góc 12 giờ (thay vì 3 giờ mặc định).
-            # Nếu chỉ cần % autopct='%1.1f%%' ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&&&&&&&&&&&&&&&&&&&&&
-            self.canvas_gender.ax.pie(sizes, labels=labels, colors=colors,
-                autopct=lambda pct: func_pct(pct, sizes),
-                #startangle=90,
-                pctdistance=0.75,          # <--- THÊM: Đẩy số % ra xa tâm một chút (0.6 -> 0.75)
-                labeldistance=1.05,         # <--- THÊM: Đẩy nhãn "Nam/Nữ/Khác" ra xa viền
-                textprops={'fontsize': 9}  # <--- THÊM: Giảm cỡ chữ xuống 9 cho gọn)
-            )
-            # axis('equal') giúp biểu đồ tròn vo, không bị méo thành hình bầu dục
-            self.canvas_gender.ax.axis('equal')
-            self.canvas_gender.ax.set_title("Tỷ lệ Giới tính")
-        else:
-            self.canvas_gender.ax.text(0.5, 0.5, "Chưa có dữ liệu", ha='center')
-        # Thêm vào Widget trên UI (Cần đảm bảo widget_chart_gender đã có layout)
-        if self.ui.widget_chart_gender.layout() is None:
-            self.ui.verticalLayout_gender = QVBoxLayout(self.ui.widget_chart_gender)
-        self.ui.verticalLayout_gender.addWidget(self.canvas_gender)
-
-        # --- 3. Vẽ Biểu đồ cột (GPA) ------------------------------------------------------------------------------
-        if hasattr(self, 'canvas_gpa'):
-            self.ui.verticalLayout_gpa.removeWidget(self.canvas_gpa)
-            self.canvas_gpa.deleteLater()
-
-        self.canvas_gpa = ChartCanvas(self)
-        categories = list(gpa_counts.keys())
-        values = list(gpa_counts.values())
-        # Vẽ biểu đồ cột
-        # color='#4CAF50': Màu xanh lá cây
-        # width=0.5: Độ rộng của cột
-        bars = self.canvas_gpa.ax.bar(categories, values, color='#4CAF50', width=0.5)
-        # Đặt tiêu đề và nhãn trục
-        self.canvas_gpa.ax.set_title("Phân bố điểm GPA")
-        self.canvas_gpa.ax.set_ylabel("Số lượng")
-        # --- FIX LỖI BỊ ĐÈ: Tăng giới hạn trần trục Y ---
-        if values:
-            max_val = max(values)
-            # Tăng trần lên 1.2 lần (thêm 20% khoảng trống phía trên)
-            self.canvas_gpa.ax.set_ylim(0, max_val * 1.25)
-        # --- TẠO NHÃN: SỐ LƯỢNG + % ---
-        total_sv = sum(values)
-        combined_labels = []
-        for v in values:
-            if total_sv > 0:
-                pct = (v / total_sv) * 100
-                # Format: Số lượng (xuống dòng) (Phần trăm)
-                combined_labels.append(f"{v}\n({pct:.1f}%)")
-                #combined_labels.append(f"{pct:.2f}%") #chỉ lấy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            else:
-                combined_labels.append(f"{v}\n(0%)")
-                #combined_labels.append("0%") # chỉ lấy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        # Hiển thị số lên biểu đồ
-        # Gắn nhãn với cỡ chữ nhỏ (fontsize=8)
-        #self.canvas_gpa.ax.bar_label(bars, labels=combined_labels)
-        self.canvas_gpa.ax.bar_label(bars) # chỉ lấy số ssssssssssssssssssssssssssssssssssssssssssssssssssssss
-        # Chỉ cần % :
-
-        if self.ui.widget_chart_gpa.layout() is None:
-            self.ui.verticalLayout_gpa = QVBoxLayout(self.ui.widget_chart_gpa)
-        self.ui.verticalLayout_gpa.addWidget(self.canvas_gpa)
 
     def toggle_menu(self):
         # Lấy chiều rộng hiện tại của sidebar
